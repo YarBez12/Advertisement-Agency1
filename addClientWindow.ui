@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>client_form</class>
+ <widget class="QDialog" name="client_form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>505</width>
+    <height>389</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Client Form</string>
+  </property>
+  <widget class="QLabel" name="nameLabel">
+   <property name="geometry">
+    <rect>
+     <x>44</x>
+     <y>23</y>
+     <width>163</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Company name</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="budgetSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>215</x>
+     <y>257</y>
+     <width>261</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximum">
+    <number>10000000</number>
+   </property>
+   <property name="singleStep">
+    <number>100</number>
+   </property>
+   <property name="value">
+    <number>1000</number>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="emailLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>215</x>
+     <y>101</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="placeholderText">
+    <string>example@gmail.com</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="budgetLabel">
+   <property name="geometry">
+    <rect>
+     <x>34</x>
+     <y>257</y>
+     <width>173</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Available budget</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="areaLabel">
+   <property name="geometry">
+    <rect>
+     <x>63</x>
+     <y>218</y>
+     <width>144</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Business area</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="emailLabel">
+   <property name="geometry">
+    <rect>
+     <x>151</x>
+     <y>101</y>
+     <width>56</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Email</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="addressLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>215</x>
+     <y>140</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="placeholderText">
+    <string>Prospect Nayki, 14, Kharkiv, Ukraine,  61166</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="typeLabel">
+   <property name="geometry">
+    <rect>
+     <x>154</x>
+     <y>179</y>
+     <width>53</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Type</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="typeComboBox">
+   <property name="geometry">
+    <rect>
+     <x>212</x>
+     <y>177</y>
+     <width>271</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="nameLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>215</x>
+     <y>23</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="placeholderText">
+    <string>Default company</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="phoneLabel">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>62</y>
+     <width>67</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Phone</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="areaComboBox">
+   <property name="geometry">
+    <rect>
+     <x>212</x>
+     <y>216</y>
+     <width>271</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="currentIndex">
+    <number>-1</number>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="phoneLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>215</x>
+     <y>62</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="placeholderText">
+    <string>+380 98 123 45 67</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>13</x>
+     <y>302</y>
+     <width>471</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QPushButton" name="saveButton">
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QPushButton" name="resetButton">
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QPushButton" name="cancelButton">
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QLabel" name="addressLabel">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>140</y>
+     <width>87</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Address</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
