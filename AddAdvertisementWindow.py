@@ -3,6 +3,7 @@ from typing import Tuple, Optional, List, Any
 from PyQt5.QtCore import QDate, QTimer
 from DatabaseController import DatabaseController
 from InitialData import *
+from Models import *
 
 DB_CONFIG = {
     "Driver": "{ODBC Driver 17 for SQL Server}",
@@ -13,6 +14,8 @@ DB_CONFIG = {
     "Encrypt": "no",
     "TrustServerCertificate": "yes"
 }
+
+
 
 
 class AddAdvertisementWindow(QtWidgets.QDialog):
@@ -28,7 +31,7 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         self.languageComboBox.addItems(ADVERTISEMENT_LANGUAGES)
         self.addAtachmentButton.clicked.connect(self.choose_file)
         all_campaigns = self.get_all_campaigns()
-        self.campaignComboBox.addItems(all_campaigns)
+        self.campaignComboBox.addItems([campaign.name for campaign in all_campaigns])
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
         self.resetButton.clicked.connect(self.reset)
@@ -50,13 +53,24 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         except Exception:
             return -1
 
-    def get_all_campaigns(self) -> List[str]:
-        query = "SELECT name FROM Campaigns;"
+    def get_all_campaigns(self) -> List[Campaign]:
+        query = "SELECT campaign_id, goal, company_name, name, start_date, end_date, budget FROM Campaigns;"
         try:
             _, rows = self.db_manager.fetch_data(query)
-            campaign_names = [row[0] for row in rows]
-            return campaign_names
-        except Exception as e:
+            campaigns = [
+                Campaign(
+                    campaign_id=row[0],
+                    goal=row[1],
+                    company_name=row[2],
+                    name = row[3],
+                    start_date=row[4],
+                    end_date=row[5],
+                    budget=row[6],
+                )
+                for row in rows
+            ]
+            return campaigns
+        except Exception:
             return []
 
     def validate(self) -> bool:
@@ -74,22 +88,23 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         if self.validate():
             self.accept()
 
-    def get_data(self) -> Optional[Tuple[Any, ...]]:
+    def get_data(self) -> Optional[Advertisement]:
         campaign_name = self.campaignComboBox.currentText().strip()
         query = "SELECT campaign_id FROM Campaigns WHERE name = ?;"
         _, rows = self.db_manager.fetch_data(query, (campaign_name,))
         campaign_id = rows[0][0]
-        return (
-            self.idLineEdit.text().strip(),
-            self.textLineEdit.text().strip(),
-            self.formatComboBox.currentText(),
-            self.sendDateEdit.date().toString("yyyy-MM-dd"),
-            self.topicLineEdit.text().strip(),
-            self.languageComboBox.currentText(),
-            self.attachmentLineEdit.text().strip(),
-            self.clicksLineEdit.text().strip(),
-            self.viewsLineEdit.text().strip(),
-            campaign_id
+
+        return Advertisement(
+            advertisement_id=int(self.idLineEdit.text().strip()),
+            text=self.textLineEdit.text().strip(),
+            format=self.formatComboBox.currentText(),
+            send_time=self.sendDateEdit.date().toString("yyyy-MM-dd"),
+            topic=self.topicLineEdit.text().strip(),
+            language=self.languageComboBox.currentText(),
+            attachment=self.attachmentLineEdit.text().strip(),
+            clicks=int(self.clicksLineEdit.text().strip()) if self.clicksLineEdit.text().strip() else None,
+            views=int(self.viewsLineEdit.text().strip()) if self.viewsLineEdit.text().strip() else None,
+            campaign_id=campaign_id
         )
 
     def reset(self) -> None:
@@ -104,18 +119,19 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         self.viewsLineEdit.clear()
         self.campaignComboBox.setCurrentIndex(0)
 
-    def set_data(self, data) -> None:
-        self.idLineEdit.setText(str(data[0]))
-        self.textLineEdit.setText(data[1] if data[1] else "")
-        self.formatComboBox.setCurrentText(data[2] if data[2] else "")
-        self.sendDateEdit.setDate(QDate.fromString(data[3], "yyyy-MM-dd") if data[3] else QDate.currentDate())
-        self.topicLineEdit.setText(data[4] if data[4] else "")
-        self.languageComboBox.setCurrentText(data[5] if data[5] else "")
-        self.attachmentLineEdit.setText(data[6] if data[6] else "")
-        self.clicksLineEdit.setText(str(data[7]) if data[7] != "None" else "0")
-        self.viewsLineEdit.setText(str(data[8]) if data[8] != "None" else "0")
+    def set_data(self, advertisement: Advertisement) -> None:
+        self.idLineEdit.setText(str(advertisement.advertisement_id))
+        self.textLineEdit.setText(advertisement.text or "")
+        self.formatComboBox.setCurrentText(advertisement.format or "")
+        self.sendDateEdit.setDate(
+            QDate.fromString(advertisement.send_time, "yyyy-MM-dd") if advertisement.send_time else QDate.currentDate())
+        self.topicLineEdit.setText(advertisement.topic or "")
+        self.languageComboBox.setCurrentText(advertisement.language or "")
+        self.attachmentLineEdit.setText(advertisement.attachment or "")
+        self.clicksLineEdit.setText(str(advertisement.clicks) if advertisement.clicks is not None else "")
+        self.viewsLineEdit.setText(str(advertisement.views) if advertisement.views is not None else "")
         query = "SELECT name FROM Campaigns WHERE campaign_id = ?;"
-        _, rows = self.db_manager.fetch_data(query, (data[9],))
+        _, rows = self.db_manager.fetch_data(query, (advertisement.campaign_id,))
         self.campaignComboBox.setCurrentText(rows[0][0] if rows else "")
 
     def set_campaign_name(self, campaign_name: int):

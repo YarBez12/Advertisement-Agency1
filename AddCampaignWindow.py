@@ -2,33 +2,21 @@ from PyQt5 import QtWidgets, uic
 from typing import Tuple, Optional, List
 from PyQt5.QtCore import QDate
 from DatabaseController import DatabaseController
+from InitialData import DB_CONFIG
+from Models import *
 
-
-DB_CONFIG = {
-    "Driver": "{ODBC Driver 17 for SQL Server}",
-    "Server": "localhost,1433",
-    "Database": "LabWork1",
-    "Uid": "SA",
-    "Pwd": "LUDRHQ2g4",
-    "Encrypt": "no",
-    "TrustServerCertificate": "yes"
-}
 
 
 class AddCampaignWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.db_manager = DatabaseController(DB_CONFIG)
-        max_id = self.select_max_id_from_table()
         uic.loadUi("addCampaignWindow.ui", self)
-        self.idLineEdit.setText(str(max_id + 1))
-        self.nameLineEdit.setPlaceholderText(f"Campaign #{max_id + 1}")
-        self.startDateEdit.setDate(QDate.currentDate())
-        self.endDateEdit.setDate(QDate.currentDate().addYears(5))
         self.startDateEdit.setCalendarPopup(True)
         self.endDateEdit.setCalendarPopup(True)
         all_client_names = self.get_client_names()
         self.companyComboBox.addItems(all_client_names)
+        self.reset()
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
         self.resetButton.clicked.connect(self.reset)
@@ -50,6 +38,7 @@ class AddCampaignWindow(QtWidgets.QDialog):
             return client_names
         except Exception:
             return []
+
 
     def validate(self) -> bool:
         campaign_goal = self.goalLineEdit.text().strip()
@@ -78,21 +67,21 @@ class AddCampaignWindow(QtWidgets.QDialog):
         )
 
     def reset(self) -> None:
-        self.idLineEdit.clear()
-        self.nameLineEdit.clear()
+
+        max_id = self.select_max_id_from_table()
+        self.idLineEdit.setText(str(max_id + 1))
+        self.nameLineEdit.setPlaceholderText(f"Campaign #{max_id + 1}")
         self.startDateEdit.setDate(QDate.currentDate())
         self.endDateEdit.setDate(QDate.currentDate().addYears(5))
         self.goalLineEdit.clear()
         self.budgetSpinBox.setValue(1000)
         self.companyComboBox.setCurrentIndex(0)
 
-    def set_data(self, data) -> None:
-        self.idLineEdit.setText(str(data[0]))
-        self.nameLineEdit.setText(data[1] if data[1] else "")
-        # self.startDateEdit.setDate(QDate.fromString(data[2], "yyyy-MM-dd") if data[2] else QDate.currentDate())
-        # self.endDateEdit.setDate(QDate.fromString(data[3], "yyyy-MM-dd") if data[3] else QDate.currentDate())
-        self.startDateEdit.setDate(QDate.fromString(data[2][:10], "yyyy-MM-dd"))
-        self.endDateEdit.setDate(QDate.fromString(data[3][:10], "yyyy-MM-dd"))
-        self.goalLineEdit.setText(data[4] if data[4] else "")
-        self.budgetSpinBox.setValue(int(data[5]) if data[5] != "None" else 0)
-        self.companyComboBox.setCurrentText(data[6] if data[6] else "")
+    def set_data(self, campaign: Campaign) -> None:
+        self.idLineEdit.setText(str(campaign.campaign_id))
+        self.nameLineEdit.setText(campaign.name or "")
+        self.startDateEdit.setDate(QDate.fromString(campaign.start_date, "yyyy-MM-dd"))
+        self.endDateEdit.setDate(QDate.fromString(campaign.end_date, "yyyy-MM-dd"))
+        self.goalLineEdit.setText(campaign.goal or "")
+        self.budgetSpinBox.setValue(campaign.budget or 0)
+        self.companyComboBox.setCurrentText(campaign.company_name or "")

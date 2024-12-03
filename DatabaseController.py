@@ -1,7 +1,7 @@
 import pyodbc
 from typing import List, Tuple, Dict, Any
 
-from LabWork1.DatabaseQueryError import DatabaseQueryError
+from DatabaseQueryError import DatabaseQueryError
 
 DB_CONNECTION_CONFIG : Dict[str, str]= {
     "Driver": "{ODBC Driver 17 for SQL Server}",

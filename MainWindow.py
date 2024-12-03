@@ -3,12 +3,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 from typing import List, Tuple, Any
 
-from LabWork1.AddAdvertisementWindow import AddAdvertisementWindow
-from LabWork1.AddCampaignWindow import AddCampaignWindow
-from LabWork1.AddClientWindow import AddClientWindow
-from LabWork1.CampaignAndAdvertisementsWindow import CampaignAndAdvertisementsWindow
-from LabWork1.DatabaseController import DatabaseController
-from LabWork1.SQLEditorWindow import SQLEditorWindow
+from AddAdvertisementWindow import AddAdvertisementWindow
+from AddCampaignWindow import AddCampaignWindow
+from AddClientWindow import AddClientWindow
+from CampaignAndAdvertisementsWindow import CampaignAndAdvertisementsWindow
+from DatabaseController import DatabaseController
+from SQLEditorWindow import SQLEditorWindow
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -26,11 +26,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actionGoClients.triggered.connect(lambda: self.update_table("Clients"))
         self.actionGoCampaigns.triggered.connect(lambda: self.update_table("Campaigns"))
         self.actionGoAdvertisements.triggered.connect(lambda: self.update_table("Advertisements"))
-        self.actionOpenQuery.triggered.connect(self.open_query_dialog)
         self.actionAdd.triggered.connect(self.open_dialog)
         self.actionUpdate.triggered.connect(lambda : self.open_dialog(True))
         self.actionDelete.triggered.connect(self.remove_item)
-        self.actionCampaignAndAdvertisements.triggered.connect(self.open_campaign_advertisements_dialog)
+        # self.actionCampaignAndAdvertisements.triggered.connect(self.open_campaign_advertisements_dialog)
         self.update_table("Clients")
 
     def fill_table(self, widget: QTableWidget, data: List[Tuple[Any, ...]], headers: List[str]) -> None:
@@ -137,7 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def add_advertisement(self, data):
         query = """
-                INSERT INTO Advertisements (advertisement_id, text, format, 
+                INSERT INTO Advertisements (advertisement_id, text, format,
                 send_time, topic, language, attachment, clicks, views, campaign_id )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
@@ -165,8 +164,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def edit_advertisement(self, data):
         query = """
                 UPDATE Advertisements
-                SET text = ?, format = ?, 
-                send_time = ?, topic = ?, language = ?, attachment = ?, 
+                SET text = ?, format = ?,
+                send_time = ?, topic = ?, language = ?, attachment = ?,
                 clicks = ?, views = ?, campaign_id = ?
                 WHERE advertisement_id = ?
                 """
@@ -188,6 +187,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def open_campaign_advertisements_dialog(self):
         dialog = CampaignAndAdvertisementsWindow(self.db_manager)
         dialog.exec_()
+
+
+
+
 
 
 

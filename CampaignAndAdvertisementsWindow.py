@@ -4,8 +4,8 @@ from typing import List, Tuple, Any, Optional
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTableWidgetItem
 
-from LabWork1.DatabaseController import DatabaseController
-from LabWork1.AddAdvertisementWindow import AddAdvertisementWindow
+from DatabaseController import DatabaseController
+from AddAdvertisementWindow import AddAdvertisementWindow
 
 
 class CampaignAndAdvertisementsWindow(QtWidgets.QDialog):
