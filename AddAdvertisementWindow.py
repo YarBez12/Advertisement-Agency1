@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic
 from typing import Tuple, Optional, List, Any
 from PyQt5.QtCore import QDate, QTimer
 from DatabaseController import DatabaseController
-
+from InitialData import *
 
 DB_CONFIG = {
     "Driver": "{ODBC Driver 17 for SQL Server}",
@@ -16,7 +16,6 @@ DB_CONFIG = {
 
 
 class AddAdvertisementWindow(QtWidgets.QDialog):
-    # ffff
     def __init__(self, parent=None):
         super().__init__(parent)
         self.db_manager = DatabaseController(DB_CONFIG)
@@ -25,30 +24,8 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         self.idLineEdit.setText(str(max_id + 1))
         self.sendDateEdit.setDate(QDate.currentDate().addMonths(1))
         self.sendDateEdit.setCalendarPopup(True)
-        self.formatComboBox.addItems([
-            "Text",
-            "Image",
-            "Video",
-            "Audio",
-            "HTML",
-            "Animation",
-            "Carousel",
-            "Interactive",
-            "Push Notification",
-            "Story"
-        ])
-        self.languageComboBox.addItems([
-            "English", "Spanish", "Mandarin", "Hindi", "Arabic",
-            "Bengali", "Portuguese", "Irish", "Japanese", "Punjabi",
-            "German", "Korean", "French", "Turkish", "Vietnamese",
-            "Italian", "Urdu", "Thai", "Polish", "Dutch",
-            "Persian", "Swahili", "Romanian", "Greek", "Hungarian",
-            "Czech", "Finnish", "Hebrew", "Malay", "Indonesian",
-            "Norwegian", "Swedish", "Danish", "Bulgarian", "Serbian",
-            "Croatian", "Slovak", "Ukrainian", "Lithuanian", "Latvian",
-            "Estonian", "Filipino", "Tamil", "Kannada", "Gujarati",
-            "Marathi", "Telugu", "Malayalam", "Sinhala", "Burmese"
-        ])
+        self.formatComboBox.addItems(ADVERTISEMENT_FORMATS)
+        self.languageComboBox.addItems(ADVERTISEMENT_LANGUAGES)
         self.addAtachmentButton.clicked.connect(self.choose_file)
         all_campaigns = self.get_all_campaigns()
         self.campaignComboBox.addItems(all_campaigns)

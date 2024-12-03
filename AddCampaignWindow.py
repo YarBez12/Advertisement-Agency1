@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, uic
 from typing import Tuple, Optional, List
 from PyQt5.QtCore import QDate
-from LabWork1.DatabaseController import DatabaseController
+from DatabaseController import DatabaseController
 
 
 DB_CONFIG = {
