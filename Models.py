@@ -29,83 +29,83 @@ class Client(Model):
                 self.__available_budget]
         return headers, data
 
-        @property
-        def company_name(self):
-            return self.__company_name
+    @property
+    def company_name(self):
+        return self.__company_name
 
-        @company_name.setter
-        def company_name(self, value):
-            if len(value) <= 2:
-                raise ValueError("Too short company name")
-            self.__company_name = value
+    @company_name.setter
+    def company_name(self, value):
+        if len(value) <= 2:
+            raise ValueError("Too short company name")
+        self.__company_name = value
 
-        @property
-        def phone(self):
-            return self.__phone
+    @property
+    def phone(self):
+        return self.__phone
 
-        @phone.setter
-        def phone(self, value):
-            pattern = r"^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$"
-            if not re.match(pattern, value):
-                raise ValueError("Invalid phone format (e.g., +1234567890 or 123-456-7890).")
-            self.__phone = value
+    @phone.setter
+    def phone(self, value):
+        pattern = r"^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$"
+        if not re.match(pattern, value):
+            raise ValueError("Invalid phone format (e.g., +1234567890 or 123-456-7890).")
+        self.__phone = value
 
-        @property
-        def email(self):
-            return self.__email
+    @property
+    def email(self):
+        return self.__email
 
-        @email.setter
-        def email(self, value):
-            pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-            if not re.match(pattern, value):
-                raise ValueError("Invalid email format. Example: user@gmail.com")
-            self.__email = value
+    @email.setter
+    def email(self, value):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(pattern, value):
+            raise ValueError("Invalid email format. Example: user@gmail.com")
+        self.__email = value
 
-        @property
-        def address(self):
-            return self.__address
+    @property
+    def address(self):
+        return self.__address
 
-        @address.setter
-        def address(self, value):
-            if value:
-                if len(value) < 5:
-                    raise ValueError("Address must be at least 5 characters long.")
-                if not any(char.isalnum() for char in value):
-                    raise ValueError("Address must contain at least one alphanumeric character.")
-            self.__address = value
+    @address.setter
+    def address(self, value):
+        if value:
+            if len(value) < 5:
+                raise ValueError("Address must be at least 5 characters long.")
+            if not any(char.isalnum() for char in value):
+                raise ValueError("Address must contain at least one alphanumeric character.")
+        self.__address = value
 
-        @property
-        def type(self):
-            return self.__type
+    @property
+    def type(self):
+        return self.__type
 
-        @type.setter
-        def type(self, value):
-            if value not in ["Individual", "Company"]:
-                raise ValueError("Type must be 'Individual' or 'Company'")
-            self.__type = value
+    @type.setter
+    def type(self, value):
+        if value not in ["Individual", "Company"]:
+            raise ValueError("Type must be 'Individual' or 'Company'")
+        self.__type = value
 
-        @property
-        def business_area(self):
-            return self.__business_area
+    @property
+    def business_area(self):
+        return self.__business_area
 
-        @business_area.setter
-        def business_area(self, value):
-            if value not in CLIENT_AREAS:
-                raise ValueError("Business area cannot be empty.")
-            self.__business_area = value
+    @business_area.setter
+    def business_area(self, value):
+        if value not in CLIENT_AREAS:
+            raise ValueError("Business area cannot be empty.")
+        self.__business_area = value
 
-        @property
-        def available_budget(self):
-            return self.__available_budget
+    @property
+    def available_budget(self):
+        return self.__available_budget
 
-        @available_budget.setter
-        def available_budget(self, value):
-            if value:
-                if not isinstance(value, int):
-                    raise TypeError("Budget must be an integer number.")
-                if value < 0:
-                    raise ValueError("Budget cannot be negative.")
-            self.__available_budget = value
+    @available_budget.setter
+    def available_budget(self, value):
+        if value:
+            if not isinstance(value, int):
+                raise TypeError("Budget must be an integer number.")
+            if value < 0:
+                raise ValueError("Budget cannot be negative.")
+        self.__available_budget = value
 
 
 class Campaign(Model):
@@ -120,6 +120,7 @@ class Campaign(Model):
 
     def __str__(self):
         return f"Campaign({self.__name or 'Unnamed'}, Goal: {self.__goal}, Company: {self.__company_name})"
+
 
     def GetData(self):
         headers = ["Campaign ID", "Name", "Start Date", "End Date", "Goal", "Budget", "Company Name"]

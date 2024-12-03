@@ -1,3 +1,5 @@
+from Collections import ClientCollection, CampaignCollection, AdvertisementCollection
+
 DB_CONFIG = {
     "Driver": "{ODBC Driver 17 for SQL Server}",
     "Server": "localhost,1433",
@@ -93,3 +95,9 @@ PLATFORM_TYPES = [
     "Native Ads",
     "Affiliate Marketing"
 ]
+
+Clients = ClientCollection()
+Campaigns = CampaignCollection()
+Advertisements = AdvertisementCollection()
+
+
