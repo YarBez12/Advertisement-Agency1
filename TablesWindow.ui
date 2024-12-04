@@ -169,6 +169,9 @@
     <addaction name="actionGoClients"/>
     <addaction name="actionGoCampaigns"/>
     <addaction name="actionGoAdvertisements"/>
+    <addaction name="actionGoPlatforms"/>
+    <addaction name="actionGoSegments"/>
+    <addaction name="actionGoUsers"/>
    </widget>
    <widget class="QMenu" name="menuQuery_Editor">
     <property name="title">
@@ -243,6 +246,21 @@
   <action name="actionCampaignAndAdvertisements">
    <property name="text">
     <string>Campaign and Advertisements</string>
+   </property>
+  </action>
+  <action name="actionGoPlatforms">
+   <property name="text">
+    <string>Media Platforms</string>
+   </property>
+  </action>
+  <action name="actionGoSegments">
+   <property name="text">
+    <string>Audience Segments</string>
+   </property>
+  </action>
+  <action name="actionGoUsers">
+   <property name="text">
+    <string>Users</string>
    </property>
   </action>
  </widget>

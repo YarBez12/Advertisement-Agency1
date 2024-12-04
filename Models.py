@@ -11,10 +11,11 @@ class Model:
         return [], []
 
 class Client(Model):
-    def __init__(self, company_name, phone, email, type, business_area, address=None, available_budget=None):
+    def __init__(self, company_name, phone, email, password, type, business_area, address=None, available_budget=None):
         self.__company_name = company_name
         self.__phone = phone
         self.__email = email
+        self.__password = password
         self.__address = address
         self.__type = type
         self.__business_area = business_area
@@ -24,10 +25,20 @@ class Client(Model):
         return f"Client({self.__company_name}, {self.__type}, {self.__business_area})"
 
     def GetData(self):
-        headers = ["Company Name", "Phone", "Email", "Address", "Type", "Business Area", "Available Budget"]
-        data = [self.__company_name, self.__phone, self.__email, self.__address, self.__type, self.__business_area,
-                self.__available_budget]
+        headers = ["Company Name", "Phone", "Email", "Password", "Address", "Type", "Business Area", "Available Budget"]
+        data = [self.__company_name, self.__phone, self.__email, self.__password, self.__address, self.__type,
+                self.__business_area, self.__available_budget]
         return headers, data
+
+    @property
+    def password(self):
+        return self.__password
+
+    @password.setter
+    def password(self, value):
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        self.__password = value
 
     @property
     def company_name(self):
@@ -109,9 +120,9 @@ class Client(Model):
 
 
 class Campaign(Model):
-    def __init__(self, campaign_id, goal, company_name, name=None, start_date=None, end_date=None, budget=None):
+    def __init__(self, campaign_id, campaign_name, goal, company_name, start_date=None, end_date=None, budget=None):
         self.__campaign_id = campaign_id
-        self.__name = name
+        self.__campaign_name = campaign_name
         self.__start_date = start_date
         self.__end_date = end_date
         self.__goal = goal
@@ -119,13 +130,12 @@ class Campaign(Model):
         self.__company_name = company_name
 
     def __str__(self):
-        return f"Campaign({self.__name or 'Unnamed'}, Goal: {self.__goal}, Company: {self.__company_name})"
-
+        return f"Campaign({self.__campaign_name or 'Unnamed'}, Goal: {self.__goal}, Company: {self.__company_name})"
 
     def GetData(self):
-        headers = ["Campaign ID", "Name", "Start Date", "End Date", "Goal", "Budget", "Company Name"]
-        data = [self.__campaign_id, self.__name, self.__start_date, self.__end_date, self.__goal, self.__budget,
-                self.__company_name]
+        headers = ["Campaign ID", "Campaign Name", "Start Date", "End Date", "Goal", "Budget", "Company Name"]
+        data = [self.__campaign_id, self.__campaign_name, self.__start_date, self.__end_date, self.__goal,
+                self.__budget, self.__company_name]
         return headers, data
 
     @property
@@ -141,14 +151,14 @@ class Campaign(Model):
         self.__campaign_id = value
 
     @property
-    def name(self):
-        return self.__name
+    def campaign_name(self):
+        return self.__campaign_name
 
-    @name.setter
-    def name(self, value):
-        if value and len(value) <= 2:
+    @campaign_name.setter
+    def campaign_name(self, value):
+        if len(value) <= 2:
             raise ValueError("Too short campaign name.")
-        self.__name = value
+        self.__campaign_name = value
 
     @property
     def start_date(self):
@@ -357,6 +367,7 @@ class Advertisement(Model):
                 raise ValueError("Campaign ID must be a positive number.")
         self.__campaign_id = value
 
+
     @property
     def platform_id(self):
         return self.__platform_id
@@ -382,19 +393,20 @@ class Advertisement(Model):
 
 
 class MediaPlatform(Model):
-    def __init__(self, platform_id, name, platform_type=None, main_ad_format=None, audience_size=None):
+    def __init__(self, platform_id, platform_name, platform_type=None, main_ad_format=None, audience_size=None):
         self.__platform_id = platform_id
-        self.__name = name
+        self.__platform_name = platform_name
         self.__platform_type = platform_type
         self.__main_ad_format = main_ad_format
         self.__audience_size = audience_size
 
     def __str__(self):
-        return f"MediaPlatform({self.__name}, Type: {self.__platform_type})"
+        return f"MediaPlatform({self.__platform_name}, Type: {self.__platform_type})"
 
     def GetData(self):
-        headers = ["Platform ID", "Name", "Type", "Main Ad Format", "Audience Size"]
-        data = [self.__platform_id, self.__name, self.__platform_type, self.__main_ad_format, self.__audience_size]
+        headers = ["Platform ID", "Platform Name", "Type", "Main Ad Format", "Audience Size"]
+        data = [self.__platform_id, self.__platform_name, self.__platform_type, self.__main_ad_format,
+                self.__audience_size]
         return headers, data
 
     @property
@@ -410,14 +422,14 @@ class MediaPlatform(Model):
         self.__platform_id = value
 
     @property
-    def name(self):
-        return self.__name
+    def platform_name(self):
+        return self.__platform_name
 
-    @name.setter
-    def name(self, value):
+    @platform_name.setter
+    def platform_name(self, value):
         if not value:
             raise ValueError("Platform name is empty.")
-        self.__name = value
+        self.__platform_name = value
 
     @property
     def platform_type(self):
@@ -509,10 +521,10 @@ class CampaignPlatform(Model):
 
 
 class AudienceSegment(Model):
-    def __init__(self, segment_id, age_range, gender, language, name=None, location=None, general_interest=None,
+    def __init__(self, segment_id, age_range, gender, language, segment_name=None, location=None, general_interest=None,
                  socioeconomic_status=None, behavioral_characteristics=None, device_used=None):
         self.__segment_id = segment_id
-        self.__name = name
+        self.__segment_name = segment_name
         self.__age_range = age_range
         self.__gender = gender
         self.__location = location
@@ -523,12 +535,12 @@ class AudienceSegment(Model):
         self.__device_used = device_used
 
     def __str__(self):
-        return f"AudienceSegment({self.__name or 'Unnamed'}, Age Range: {self.__age_range}, Gender: {self.__gender})"
+        return f"AudienceSegment({self.__segment_name or 'Unnamed'}, Age Range: {self.__age_range}, Gender: {self.__gender})"
 
     def GetData(self):
         headers = ["Segment ID", "Name", "Age Range", "Gender", "Location", "General Interest",
                    "Socioeconomic Status", "Language", "Behavioral Characteristics", "Device Used"]
-        data = [self.__segment_id, self.__name, self.__age_range, self.__gender, self.__location,
+        data = [self.__segment_id, self.__segment_name, self.__age_range, self.__gender, self.__location,
                 self.__general_interest, self.__socioeconomic_status, self.__language,
                 self.__behavioral_characteristics, self.__device_used]
         return headers, data
@@ -547,14 +559,14 @@ class AudienceSegment(Model):
         self.__segment_id = value
 
     @property
-    def name(self):
-        return self.__name
+    def segment_name(self):
+        return self.__segment_name
 
-    @name.setter
-    def name(self, value):
+    @segment_name.setter
+    def segment_name(self, value):
         if value and len(value) <= 3:
             raise ValueError("Too short audience segment name.")
-        self.__name = value
+        self.__segment_name = value
 
     @property
     def age_range(self):
@@ -730,9 +742,10 @@ class CampaignSegment(Model):
 
 
 class User(Model):
-    def __init__(self, user_id, age, gender, country, account_creation_date,
+    def __init__(self, email, password, age, gender, country, account_creation_date,
                  last_purchase_date=None, segment_id=None):
-        self.__user_id = user_id
+        self.__email = email
+        self.__password = password
         self.__age = age
         self.__gender = gender
         self.__country = country
@@ -741,25 +754,34 @@ class User(Model):
         self.__segment_id = segment_id
 
     def __str__(self):
-        return f"User(ID: {self.__user_id}, Age: {self.__age}, Gender: {self.__gender})"
+        return f"User(Email: {self.__email}, Age: {self.__age}, Gender: {self.__gender})"
 
     def GetData(self):
-        headers = ["User ID", "Age", "Gender", "Country", "Account Creation Date", "Last Purchase Date", "Segment ID"]
-        data = [self.__user_id, self.__age, self.__gender, self.__country,
+        headers = ["Email", "Password", "Age", "Gender", "Country", "Account Creation Date", "Last Purchase Date", "Segment ID"]
+        data = [self.__email, self.__password, self.__age, self.__gender, self.__country,
                 self.__account_creation_date, self.__last_purchase_date, self.__segment_id]
         return headers, data
 
     @property
-    def user_id(self):
-        return self.__user_id
+    def email(self):
+        return self.__email
 
-    @user_id.setter
-    def user_id(self, value):
-        if not isinstance(value, int):
-            raise TypeError("User ID must be an integer number.")
-        if value <= 0:
-            raise ValueError("User ID must be a positive integer.")
-        self.__user_id = value
+    @email.setter
+    def email(self, value):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(pattern, value):
+            raise ValueError("Invalid email format. Example: user@gmail.com")
+        self.__email = value
+
+    @property
+    def password(self):
+        return self.__password
+
+    @password.setter
+    def password(self, value):
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        self.__password = value
 
     @property
     def age(self):

@@ -6,7 +6,7 @@ from DatabaseQueryError import DatabaseQueryError
 DB_CONNECTION_CONFIG : Dict[str, str]= {
     "Driver": "{ODBC Driver 17 for SQL Server}",
     "Server": "localhost,1433",
-    "Database": "LabWork1",
+    "Database": "Advertising Agency",
     "Uid": "SA",
     "Pwd": "LUDRHQ2g4",
     "Encrypt": "no",

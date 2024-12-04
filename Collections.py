@@ -1,4 +1,5 @@
 from Models import *
+
 class Collection:
     def __init__(self):
         self._items = []
@@ -67,16 +68,17 @@ class ClientCollection(Collection):
                 ON target.company_name = source.company_name
                 WHEN MATCHED THEN
                     UPDATE SET
-                        phone = ?, email = ?, address = ?, type = ?, business_area = ?, available_budget = ?
+                        phone = ?, email = ?, password = ?, address = ?, type = ?, business_area = ?, available_budget = ?
                 WHEN NOT MATCHED THEN
-                    INSERT (company_name, phone, email, address, type, business_area, available_budget)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT (company_name, phone, email, password, address, type, business_area, available_budget)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ;
             """
             params = [
                 client.company_name,
                 client.phone,
                 client.email,
+                client.password,
                 client.address,
                 client.type,
                 client.business_area,
@@ -84,6 +86,7 @@ class ClientCollection(Collection):
                 client.company_name,
                 client.phone,
                 client.email,
+                client.password,
                 client.address,
                 client.type,
                 client.business_area,
@@ -108,22 +111,22 @@ class CampaignCollection(Collection):
                 ON target.campaign_id = source.campaign_id
                 WHEN MATCHED THEN
                     UPDATE SET
-                        name = ?, start_date = ?, end_date = ?, goal = ?, budget = ?, company_name = ?
+                        campaign_name = ?, start_date = ?, end_date = ?, goal = ?, budget = ?, company_name = ?
                 WHEN NOT MATCHED THEN
-                    INSERT (campaign_id, name, start_date, end_date, goal, budget, company_name)
+                    INSERT (campaign_id, campaign_name, start_date, end_date, goal, budget, company_name)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 ;
             """
             params = [
                 campaign.campaign_id,
-                campaign.name,
+                campaign.campaign_name,
                 campaign.start_date,
                 campaign.end_date,
                 campaign.goal,
                 campaign.budget,
                 campaign.company_name,
                 campaign.campaign_id,
-                campaign.name,
+                campaign.campaign_name,
                 campaign.start_date,
                 campaign.end_date,
                 campaign.goal,
@@ -190,6 +193,34 @@ class MediaPlatformCollection(Collection):
     def get_str_models_name(self):
         return "Media Platforms"
 
+    def save_to_db(self, db_manager):
+        for platform in self._items:
+            query = """
+                MERGE INTO MediaPlatforms AS target
+                USING (SELECT ? AS platform_id) AS source
+                ON target.platform_id = source.platform_id
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        platform_name = ?, platform_type = ?, main_ad_format = ?, audience_size = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (platform_id, platform_name, platform_type, main_ad_format, audience_size)
+                    VALUES (?, ?, ?, ?, ?)
+                ;
+            """
+            params = [
+                platform.platform_id,
+                platform.platform_name,
+                platform.platform_type,
+                platform.main_ad_format,
+                platform.audience_size,
+                platform.platform_id,
+                platform.platform_name,
+                platform.platform_type,
+                platform.main_ad_format,
+                platform.audience_size,
+            ]
+            db_manager.execute_query(query, params)
+
 class CampaignPlatformCollection(Collection):
     def add(self, item):
         if not isinstance(item, CampaignPlatform):
@@ -198,6 +229,29 @@ class CampaignPlatformCollection(Collection):
 
     def get_str_models_name(self):
         return "CampaignPlatformCollection"
+
+    def save_to_db(self, db_manager):
+        for cp in self._items:
+            query = """
+                MERGE INTO CampaignPlatforms AS target
+                USING (SELECT ? AS campaign_id, ? AS platform_id) AS source
+                ON target.campaign_id = source.campaign_id AND target.platform_id = source.platform_id
+                WHEN MATCHED THEN
+                    UPDATE SET budget_allocation = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (campaign_id, platform_id, budget_allocation)
+                    VALUES (?, ?, ?)
+                ;
+            """
+            params = [
+                cp.campaign_id,
+                cp.platform_id,
+                cp.budget_allocation,
+                cp.campaign_id,
+                cp.platform_id,
+                cp.budget_allocation,
+            ]
+            db_manager.execute_query(query, params)
 
 class AudienceSegmentCollection(Collection):
     def add(self, item):
@@ -208,6 +262,46 @@ class AudienceSegmentCollection(Collection):
     def get_str_models_name(self):
         return "Audience Segments"
 
+    def save_to_db(self, db_manager):
+        for segment in self._items:
+            query = """
+                MERGE INTO AudienceSegments AS target
+                USING (SELECT ? AS segment_id) AS source
+                ON target.segment_id = source.segment_id
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        segment_name = ?, age_range = ?, gender = ?, location = ?, general_interest = ?, 
+                        socioeconomic_status = ?, language = ?, behavioral_characteristics = ?, device_used = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (segment_id, segment_name, age_range, gender, location, general_interest, 
+                            socioeconomic_status, language, behavioral_characteristics, device_used)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ;
+            """
+            params = [
+                segment.segment_id,
+                segment.segment_name,
+                segment.age_range,
+                segment.gender,
+                segment.location,
+                segment.general_interest,
+                segment.socioeconomic_status,
+                segment.language,
+                segment.behavioral_characteristics,
+                segment.device_used,
+                segment.segment_id,
+                segment.segment_name,
+                segment.age_range,
+                segment.gender,
+                segment.location,
+                segment.general_interest,
+                segment.socioeconomic_status,
+                segment.language,
+                segment.behavioral_characteristics,
+                segment.device_used,
+            ]
+            db_manager.execute_query(query, params)
+
 class SegmentPlatformCollection(Collection):
     def add(self, item):
         if not isinstance(item, SegmentPlatform):
@@ -216,6 +310,29 @@ class SegmentPlatformCollection(Collection):
 
     def get_str_models_name(self):
         return "SegmentPlatformCollection"
+
+    def save_to_db(self, db_manager):
+        for sp in self._items:
+            query = """
+                MERGE INTO SegmentPlatforms AS target
+                USING (SELECT ? AS segment_id, ? AS platform_id) AS source
+                ON target.segment_id = source.segment_id AND target.platform_id = source.platform_id
+                WHEN MATCHED THEN
+                    UPDATE SET segment_id = ?, platform_id = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (segment_id, platform_id)
+                    VALUES (?, ?)
+                ;
+            """
+            params = [
+                sp.segment_id,
+                sp.platform_id,
+                sp.segment_id,
+                sp.platform_id,
+                sp.segment_id,
+                sp.platform_id,
+            ]
+            db_manager.execute_query(query, params)
 
 class CampaignSegmentCollection(Collection):
     def add(self, item):
@@ -226,6 +343,30 @@ class CampaignSegmentCollection(Collection):
     def get_str_models_name(self):
         return "CampaignSegmentCollection"
 
+    def save_to_db(self, db_manager):
+        for cs in self._items:
+            query = """
+                MERGE INTO CampaignSegments AS target
+                USING (SELECT ? AS campaign_id, ? AS segment_id) AS source
+                ON target.campaign_id = source.campaign_id AND target.segment_id = source.segment_id
+                WHEN MATCHED THEN
+                    UPDATE SET ad_frequency = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (campaign_id, segment_id, ad_frequency)
+                    VALUES (?, ?, ?)
+                ;
+            """
+            params = [
+                cs.campaign_id,
+                cs.segment_id,
+                cs.ad_frequency,
+                cs.campaign_id,
+                cs.segment_id,
+                cs.ad_frequency,
+            ]
+            db_manager.execute_query(query, params)
+
+
 class UserCollection(Collection):
     def add(self, item):
         if not isinstance(item, User):
@@ -234,3 +375,39 @@ class UserCollection(Collection):
 
     def get_str_models_name(self):
         return "Users"
+
+    def save_to_db(self, db_manager):
+        for user in self._items:
+            query = """
+                MERGE INTO Users AS target
+                USING (SELECT ? AS email) AS source
+                ON target.email = source.email
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        password = ?, age = ?, gender = ?, country = ?, account_creation_date = ?, 
+                        last_purchase_date = ?, segment_id = ?
+                WHEN NOT MATCHED THEN
+                    INSERT (email, password, age, gender, country, account_creation_date, 
+                            last_purchase_date, segment_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ;
+            """
+            params = [
+                user.email,
+                user.password,
+                user.age,
+                user.gender,
+                user.country,
+                user.account_creation_date,
+                user.last_purchase_date,
+                user.segment_id,
+                user.email,
+                user.password,
+                user.age,
+                user.gender,
+                user.country,
+                user.account_creation_date,
+                user.last_purchase_date,
+                user.segment_id,
+            ]
+            db_manager.execute_query(query, params)

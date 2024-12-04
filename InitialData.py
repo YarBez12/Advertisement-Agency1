@@ -1,9 +1,9 @@
-from Collections import ClientCollection, CampaignCollection, AdvertisementCollection
+from Collections import *
 
 DB_CONFIG = {
     "Driver": "{ODBC Driver 17 for SQL Server}",
     "Server": "localhost,1433",
-    "Database": "LabWork1",
+    "Database": "Advertising Agency",
     "Uid": "SA",
     "Pwd": "LUDRHQ2g4",
     "Encrypt": "no",
@@ -70,7 +70,8 @@ CLIENT_AREAS = [
             "Food & Beverage",
             "Pharmaceuticals",
             "Aerospace",
-            "Environmental Services"
+            "Environmental Services",
+            "Home Services"
         ]
 
 PLATFORM_TYPES = [
@@ -93,11 +94,30 @@ PLATFORM_TYPES = [
     "OTT Platform",
     "Audio Ads",
     "Native Ads",
-    "Affiliate Marketing"
+    "Affiliate Marketing",
+    "Knowledge Base"
 ]
+
+DEVICES = [
+    "Smartphone",
+    "Tablet",
+    "Laptop",
+    "Desktop",
+    "Smart TV",
+    "Gaming Console",
+    "Smart Speaker"
+]
+
 
 Clients = ClientCollection()
 Campaigns = CampaignCollection()
 Advertisements = AdvertisementCollection()
+MediaPlatforms = MediaPlatformCollection()
+CampaignPlatforms = CampaignPlatformCollection()
+AudienceSegments = AudienceSegmentCollection()
+SegmentPlatforms = SegmentPlatformCollection()
+CampaignSegments = CampaignSegmentCollection()
+Users = UserCollection()
+
 
 

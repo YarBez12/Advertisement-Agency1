@@ -1,13 +1,12 @@
+
 from PyQt5 import QtWidgets, uic
 from typing import Tuple, Optional, List, Any
 from PyQt5.QtCore import QDate, QTimer
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
 import InitialData
-from Controllers import AddAdvertisementWindowController, AddCampaignWindowController, AddClientWindowController, \
-    TablesWindowController
+from Controllers import *
 from DatabaseController import DatabaseController
-from InitialData import *
 from Models import *
 
 
@@ -16,14 +15,15 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         super().__init__(parent)
         uic.loadUi("AddAdvertisementWindow.ui", self)
         self.sendDateEdit.setCalendarPopup(True)
-        self.formatComboBox.addItems(ADVERTISEMENT_FORMATS)
-        self.languageComboBox.addItems(LANGUAGES)
+        self.formatComboBox.addItems(InitialData.ADVERTISEMENT_FORMATS)
+        self.languageComboBox.addItems(InitialData.LANGUAGES)
         self.addAtachmentButton.clicked.connect(self.choose_file)
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
         self.__controller = AddAdvertisementWindowController(self)
         self.resetButton.clicked.connect(self.reset_data)
-        self.campaignComboBox.addItems([campaign.name for campaign in InitialData.Campaigns.get_items()])
+        self.campaignComboBox.addItems([campaign.campaign_name for campaign in InitialData.Campaigns.get_items()])
+        self.platformComboBox.addItems([platform.platform_name for platform in InitialData.MediaPlatforms.get_items()])
         self.reset_data()
 
     def choose_file(self) -> None:
@@ -54,6 +54,109 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
 
     def set_campaign_name(self, campaign_name: int):
         self.__controller.set_campaign_name(campaign_name)
+
+
+class AddPlatformWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("AddPlatformWindow.ui", self)
+        self.formatComboBox.addItems(InitialData.ADVERTISEMENT_FORMATS)
+        self.typeComboBox.addItems(InitialData.PLATFORM_TYPES)
+        self.saveButton.clicked.connect(self.save)
+        self.cancelButton.clicked.connect(self.reject)
+        self.__controller = AddPlatformWindowController(self)
+        self.resetButton.clicked.connect(self.reset_data)
+        self.reset_data()
+
+    def save(self) -> None:
+        validation = self.__controller.validate_window()
+        if not validation:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Unfilled fields",
+                "Please fill in all necessary fields"
+            )
+        else:
+            self.accept()
+
+    def get_data(self) -> Optional[Advertisement]:
+        return self.__controller.get_data()
+
+    def set_data(self, platform) -> None:
+        self.__controller.set_data(platform)
+
+    def reset_data(self):
+        self.__controller.reset_data()
+
+class AddSegmentWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("AddSegmentWindow.ui", self)
+        self.genderComboBox.addItems(["Male", "Female", "Other"])
+        self.locationComboBox.addItems(InitialData.LOCATIONS)
+        self.languageComboBox.addItems(InitialData.LANGUAGES)
+        self.deviceComboBox.addItems(InitialData.DEVICES)
+        self.saveButton.clicked.connect(self.save)
+        self.cancelButton.clicked.connect(self.reject)
+        self.__controller = AddSegmentWindowController(self)
+        self.resetButton.clicked.connect(self.reset_data)
+        self.reset_data()
+
+    def save(self) -> None:
+        validation = self.__controller.validate_window()
+        if not validation:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Unfilled fields",
+                "Please fill in all necessary fields"
+            )
+        else:
+            self.accept()
+
+    def get_data(self) -> Optional[Advertisement]:
+        return self.__controller.get_data()
+
+    def set_data(self, segment) -> None:
+        self.__controller.set_data(segment)
+
+    def reset_data(self):
+        self.__controller.reset_data()
+
+
+class AddUserWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("AddUserWindow.ui", self)
+        self.genderComboBox.addItems(["Male", "Female", "Other"])
+        self.countryComboBox.addItems(InitialData.LOCATIONS)
+        self.createdDateEdit.setCalendarPopup(True)
+        self.lastPurchaseDateEdit.setCalendarPopup(True)
+        self.segmentComboBox.addItems([segment.segment_name for segment in InitialData.AudienceSegments.get_items()])
+        self.saveButton.clicked.connect(self.save)
+        self.cancelButton.clicked.connect(self.reject)
+        self.__controller = AddUserWindowController(self)
+        self.resetButton.clicked.connect(self.reset_data)
+        self.reset_data()
+
+    def save(self) -> None:
+        validation = self.__controller.validate_window()
+        if not validation:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Unfilled fields",
+                "Please fill in all necessary fields"
+            )
+        else:
+            self.accept()
+
+    def get_data(self) -> Optional[Advertisement]:
+        return self.__controller.get_data()
+
+    def set_data(self, user) -> None:
+        self.__controller.set_data(user)
+
+    def reset_data(self):
+        self.__controller.reset_data()
 
 
 class AddCampaignWindow(QtWidgets.QDialog):
@@ -94,7 +197,7 @@ class AddClientWindow(QtWidgets.QDialog):
         super().__init__(parent)
         uic.loadUi("AddClientWindow.ui", self)
         self.typeComboBox.addItems(["Individual", "Company"])
-        self.areaComboBox.addItems(CLIENT_AREAS)
+        self.areaComboBox.addItems(InitialData.CLIENT_AREAS)
         self.__controller = AddClientWindowController(self)
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
@@ -123,24 +226,6 @@ class AddClientWindow(QtWidgets.QDialog):
 
 class TablesWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
-        # super().__init__()
-        # uic.loadUi("TablesWindow.ui", self)
-        # self.addButton.clicked.connect(self.open_item_dialog)
-        # self.editButton.clicked.connect(lambda : self.open_item_dialog(True)) #1
-        # self.removeButton.clicked.connect(self.remove_item)
-        # self.firstButton.clicked.connect(self.navigate_first)
-        # self.previousButton.clicked.connect(self.navigate_previous)
-        # self.nextButton.clicked.connect(self.navigate_next)
-        # self.lastButton.clicked.connect(self.navigate_last)
-        # self.actionGoClients.triggered.connect(lambda: self.update_table(InitialData.Clients))
-        # self.actionGoCampaigns.triggered.connect(lambda: self.update_table(InitialData.Campaigns))
-        # self.actionGoAdvertisements.triggered.connect(lambda: self.update_table(InitialData.Advertisements))
-        # self.actionAdd.triggered.connect(self.open_item_dialog)
-        # self.actionUpdate.triggered.connect(lambda : self.open_item_dialog(True)) #2
-        # self.actionDelete.triggered.connect(self.remove_item)
-        # self.current_data = InitialData.Clients
-        # self.update_table(self.current_table)
-
         super().__init__()
         uic.loadUi("TablesWindow.ui", self)
         self.__controller = TablesWindowController(self)
@@ -153,6 +238,9 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.lastButton.clicked.connect(self.__controller.navigate_last)
         self.actionGoClients.triggered.connect(lambda: self.__controller.update_table(InitialData.Clients))
         self.actionGoCampaigns.triggered.connect(lambda: self. __controller.update_table(InitialData.Campaigns))
+        self.actionGoPlatforms.triggered.connect(lambda: self.__controller.update_table(InitialData.MediaPlatforms))
+        self.actionGoSegments.triggered.connect(lambda: self.__controller.update_table(InitialData.AudienceSegments))
+        self.actionGoUsers.triggered.connect(lambda: self.__controller.update_table(InitialData.Users))
         self.actionGoAdvertisements.triggered.connect(lambda: self.__controller.update_table(InitialData.Advertisements))
         self.actionAdd.triggered.connect(self.open_item_dialog)
         self.actionUpdate.triggered.connect(lambda: self.open_item_dialog(True))
@@ -169,7 +257,10 @@ class TablesWindow(QtWidgets.QMainWindow):
         key_columns = {
             "Clients": "company_name",
             "Campaigns": "campaign_id",
-            "Advertisements": "advertisement_id"
+            "Advertisements": "advertisement_id",
+            "Media Platforms": "platform_id",
+            "Audience Segments": "segment_id",
+            "Users": "email"
         }
         key_value = self.dataTableWidget.item(selected_row, 0).text()
         reply = QtWidgets.QMessageBox.question(
@@ -183,63 +274,14 @@ class TablesWindow(QtWidgets.QMainWindow):
             if deleted_key:
                 self.__controller.update_table(self.__controller.current_data)
 
-    # def remove_item(self) -> None:
-    #     table_name = self.current_data.get_str_models_name()
-    #     key_columns = {
-    #         "Clients" : "company_name",
-    #         "Campaigns" : "campaign_id",
-    #         "Advertisements" : "advertisement_id"
-    #     }
-    #     selected_row = self.dataTableWidget.currentRow()
-    #     if selected_row != -1:
-    #         key_value = self.dataTableWidget.item(selected_row, 0).text()
-    #         reply = QtWidgets.QMessageBox.question(self,
-    #             "Confirmation",
-    #             f"Are you sure you want to delete item with {key_columns[table_name]} = {key_value}",
-    #             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
-    #         )
-    #         if reply == QtWidgets.QMessageBox.Yes:
-    #             remove_item = next(
-    #                 item for item in self.current_data.get_items() if str(item.GetData()[1][0]) == key_value)
-    #             self.current_data.remove(remove_item)
-    #             self.update_table(self.current_data)
-    #         else:
-    #             return
-
-    # def open_item_dialog(self, edit : bool = False) -> None:
-    #     dialogs = {
-    #         "Clients" : AddClientWindow,
-    #         "Campaigns" : AddCampaignWindow,
-    #         "Advertisements" : AddAdvertisementWindow
-    #     }
-    #     table_name = self.current_data.get_str_models_name()
-    #     dialog_class = dialogs.get(table_name)
-    #     if not dialog_class:
-    #         return
-    #     if edit:
-    #         selected_row = self.dataTableWidget.currentRow();
-    #         if selected_row == -1:
-    #             QtWidgets.QMessageBox.warning(self, "No data", "Please select a row to edit")
-    #             return
-    #         edit_item = self.current_data[selected_row]
-    #         dialog = dialog_class(self)
-    #         dialog.set_data(edit_item)
-    #     else:
-    #         dialog = dialog_class(self)
-    #     if dialog.exec_() == QtWidgets.QDialog.Accepted:
-    #         data = dialog.get_data()
-    #         if data:
-    #             if edit:
-    #                 self.current_data.update(selected_row, data)
-    #             else:
-    #                 self.current_data.add(data)
-    #             self.update_table(self.current_data)
-
     def open_item_dialog(self, edit: bool = False) -> None:
         dialogs = {
             "Clients": AddClientWindow,
             "Campaigns": AddCampaignWindow,
-            "Advertisements": AddAdvertisementWindow
+            "Advertisements": AddAdvertisementWindow,
+            "Media Platforms": AddPlatformWindow,
+            "Audience Segments": AddSegmentWindow,
+            "Users": AddUserWindow
         }
         table_name = self.__controller.current_data.get_str_models_name()
         dialog_class = dialogs.get(table_name)

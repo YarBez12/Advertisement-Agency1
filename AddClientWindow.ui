@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>505</width>
-    <height>389</height>
+    <height>432</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>215</x>
-     <y>257</y>
+     <y>297</y>
      <width>261</width>
      <height>24</height>
     </rect>
@@ -79,7 +79,7 @@
    <property name="geometry">
     <rect>
      <x>34</x>
-     <y>257</y>
+     <y>297</y>
      <width>173</width>
      <height>29</height>
     </rect>
@@ -97,7 +97,7 @@
    <property name="geometry">
     <rect>
      <x>63</x>
-     <y>218</y>
+     <y>258</y>
      <width>144</width>
      <height>29</height>
     </rect>
@@ -133,7 +133,7 @@
    <property name="geometry">
     <rect>
      <x>215</x>
-     <y>140</y>
+     <y>180</y>
      <width>271</width>
      <height>21</height>
     </rect>
@@ -152,7 +152,7 @@
    <property name="geometry">
     <rect>
      <x>154</x>
-     <y>179</y>
+     <y>219</y>
      <width>53</width>
      <height>29</height>
     </rect>
@@ -170,7 +170,7 @@
    <property name="geometry">
     <rect>
      <x>212</x>
-     <y>177</y>
+     <y>217</y>
      <width>271</width>
      <height>26</height>
     </rect>
@@ -229,7 +229,7 @@
    <property name="geometry">
     <rect>
      <x>212</x>
-     <y>216</y>
+     <y>256</y>
      <width>271</width>
      <height>26</height>
     </rect>
@@ -267,7 +267,7 @@
    <property name="geometry">
     <rect>
      <x>13</x>
-     <y>302</y>
+     <y>342</y>
      <width>471</width>
      <height>51</height>
     </rect>
@@ -300,7 +300,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>140</y>
+     <y>180</y>
      <width>87</width>
      <height>29</height>
     </rect>
@@ -312,6 +312,43 @@
    </property>
    <property name="text">
     <string>Address</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="passwordLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>214</x>
+     <y>140</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="placeholderText">
+    <string>Strong password</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="passwordlLabel">
+   <property name="geometry">
+    <rect>
+     <x>105</x>
+     <y>140</y>
+     <width>101</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>24</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Password</string>
    </property>
   </widget>
  </widget>
