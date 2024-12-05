@@ -322,16 +322,55 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.actionUpdate.triggered.connect(lambda: self.open_item_dialog(True))
         self.actionDelete.triggered.connect(self.remove_item)
         self.sortButton.clicked.connect(self.open_sort_dialog)
+        self.findButton.clicked.connect(self.open_find_dialog)
+        # self.filterButton.clicked.connect(self.open_filter_dialog)
+        self.resetButton.clicked.connect(self.reset_editing)
+        # self.sortButton.setVisible(False)
+        # self.findButton.setVisible(False)
+        # self.filterButton.setVisible(False)
         self.__controller.update_table(self.__controller.current_data)
 
+    def reset_editing(self):
+        self.__controller.find_criteria = None
+        self.__controller.sort_criteria = None
+        self.__controller.display_data = self.__controller.current_data
+        self.__controller.update_table(self.__controller.current_data)
     def open_sort_dialog(self):
-        print(123)
-        sort_dialog = CampaignSortWindow(self)
+        # print(123)
+        sort_dialogs = {
+            "Campaigns" : CampaignSortWindow
+        }
+        dialog = sort_dialogs.get(self.__controller.current_data.get_str_models_name(), None)
+        if dialog:
+            sort_dialog = dialog(self, self.__controller.sort_criteria)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Unavailable function", "This button is unavailable")
+            return
+        # sort_dialog = CampaignSortWindow(self, self.__controller.sort_criteria)
         if sort_dialog.exec_() == QtWidgets.QDialog.Accepted:
             selected_option = sort_dialog.get_selected_option()
-            print(selected_option)
+            # print(selected_option)
             if selected_option:
                 self.__controller.sort_table(selected_option)
+
+    def open_find_dialog(self):
+        find_dialogs = {
+            "Campaigns" : CampaignFindWindow
+        }
+        dialog = find_dialogs.get(self.__controller.current_data.get_str_models_name(), None)
+        if dialog:
+            find_dialog = dialog(self, self.__controller.find_criteria)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Unavailable function", "This button is unavailable")
+            return
+        if find_dialog.exec_() == QtWidgets.QDialog.Accepted:
+            search_criteria = find_dialog.get_search_criteria()
+            # print(*search_criteria)
+            if search_criteria:
+                try:
+                    self.__controller.find_items(search_criteria)
+                except ValueError as e:
+                    QtWidgets.QMessageBox.warning(self, "No data", str(e))
 
     def remove_item(self) -> None:
         selected_row = self.dataTableWidget.currentRow()
@@ -357,8 +396,8 @@ class TablesWindow(QtWidgets.QMainWindow):
         )
         if reply == QtWidgets.QMessageBox.Yes:
             deleted_key = self.__controller.remove_item(selected_row)
-            if deleted_key:
-                self.__controller.update_table(self.__controller.current_data)
+            # if deleted_key:
+                # self.__controller.update_table(self.__controller.current_data)
 
     def open_item_dialog(self, edit: bool = False) -> None:
         dialogs = {
@@ -389,7 +428,7 @@ class TablesWindow(QtWidgets.QMainWindow):
             data = dialog.get_data()
             if data:
                 self.__controller.save_item(data, edit, self.dataTableWidget.currentRow() if edit else None)
-                self.__controller.update_table(self.__controller.current_data)
+                # self.__controller.update_table(self.__controller.current_data)
 
 
     def open_info_window(self) -> None:
@@ -418,12 +457,32 @@ class TablesWindow(QtWidgets.QMainWindow):
         info_window = window_class(self, selected_item, update_callback)
         self.hide()
         info_window.show()
+class CampaignFindWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None, criteria = None):
+        super().__init__(parent)
+        uic.loadUi("CampaignFindWindow.ui", self)
+        self.findButton.clicked.connect(self.accept)
+        if criteria:
+            self.nameLineEdit.setText(criteria["Name"])
+            self.goalLineEdit.setText(criteria["Goal"])
+
+    def get_search_criteria(self):
+        # print(1)
+        # print(self.nameLineEdit.text().strip(), self.goalLineEdit.text().strip())
+        return [self.nameLineEdit.text().strip(), self.goalLineEdit.text().strip()]
+
 
 class CampaignSortWindow(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, criteria = None):
         super().__init__(parent)
         uic.loadUi("CampaignSortWindow.ui", self)
         self.sortButton.clicked.connect(self.accept)
+        if (criteria == "By start date"):
+            self.startDateRadioButton.setChecked(True)
+        elif (criteria == "By budget"):
+            self.budgetRadioButton.setChecked(True)
+        elif (criteria == "By name"):
+            self.nameRadioButton.setChecked(True)
 
     def get_selected_option(self):
         if self.startDateRadioButton.isChecked():
@@ -676,7 +735,7 @@ class CampaignWindow(QtWidgets.QMainWindow):
         if not self.campaigns[self.current_index]:
             QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
             return
-        print(self.campaigns[self.current_index])
+        # print(self.campaigns[self.current_index])
         dialog.set_data(self.campaigns[self.current_index])
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             updated_campaign = dialog.get_data()

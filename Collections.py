@@ -56,8 +56,8 @@ class Collection:
         sorted_collection._items = sorted(
             self._items,
             key=lambda x: (
-                key_func(x) is None,  # Перемещаем None в конец
-                str(key_func(x))  # Преобразуем значения в строки для сравнения
+                key_func(x) is None or key_func(x) == "",
+                key_func(x) if key_func(x) is not None else ""
             )
         )
         return sorted_collection
@@ -180,6 +180,16 @@ class CampaignCollection(Collection):
                 campaign.company_name,
             ]
             db_manager.execute_query(query, params)
+
+    def find_contains(self, campaign_name: str, goal: str):
+        results = []
+        for item in self._items:
+            campaign_name_value = item.campaign_name.lower() if item.campaign_name else ""
+            goal_value = item.goal.lower() if item.goal else ""
+
+            if campaign_name.lower() in campaign_name_value and goal.lower() in goal_value:
+                results.append(item)
+        return results
 
 
 class AdvertisementCollection(Collection):

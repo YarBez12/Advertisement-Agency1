@@ -153,8 +153,8 @@ class AddCampaignWindowController:
         self.__window.companyComboBox.setCurrentIndex(0)
 
     def set_data(self, campaign: Campaign) -> None:
-        print(campaign.start_date)
-        print(type(campaign.start_date))
+        # print(campaign.start_date)
+        # print(type(campaign.start_date))
         self.__window.idLineEdit.setText(str(campaign.campaign_id))
         self.__window.nameLineEdit.setText(campaign.campaign_name or "")
         if campaign.start_date:
@@ -238,6 +238,14 @@ class TablesWindowController:
     def __init__(self, window):
         self.__window = window
         self.current_data = InitialData.Clients
+        self.display_data = InitialData.Clients
+        self.sort_criteria = None
+        self.find_criteria = None
+        self.sort_key_mapping = {
+            "By start date": lambda x: getattr(x, "start_date", None),
+            "By budget": lambda x: getattr(x, "budget", None),
+            "By name": lambda x: getattr(x, "campaign_name", None)
+        }
 
     def fill_table(self, data) -> None:
         headers = data[0].GetData()[0]
@@ -280,9 +288,23 @@ class TablesWindowController:
                 self.__window.dataTableWidget.setItem(row_ind, col_ind, item)
 
     def update_table(self, data) -> None:
-        self.fill_table(data)
-        self.__window.databaseNameLabel.setText(data.get_str_models_name())
         self.current_data = data
+        self.display_data = data
+        self.fill_table_with_edited_data()
+        self.__window.databaseNameLabel.setText(data.get_str_models_name())
+
+    def fill_table_with_edited_data(self):
+        if self.find_criteria:
+            found_items = self.current_data.find_contains(self.find_criteria["Name"],
+                                                          self.find_criteria["Goal"])
+            found_collection = self.current_data.__class__()
+            for item in found_items:
+                found_collection.add(item)
+            self.display_data = found_collection
+        if self.sort_criteria:
+            # self.display_data = self.current_data.sort_items(self.sort_key_mapping[self.sort_criteria])
+            self.display_data = self.display_data.sort_items(self.sort_key_mapping[self.sort_criteria])
+        self.fill_table(self.display_data)
 
     def navigate_first(self) -> None:
         if self.__window.dataTableWidget.rowCount() > 0:
@@ -308,11 +330,13 @@ class TablesWindowController:
 
         key_value = self.__window.dataTableWidget.item(selected_row, 0).text()
         remove_item = next(
-            (item for item in self.current_data.get_items() if str(item.GetData()[1][0]) == key_value),
+            (item for item in self.display_data.get_items() if str(item.GetData()[1][0]) == key_value),
             None
         )
         if remove_item:
             self.current_data.remove(remove_item)
+            self.display_data.remove(remove_item)
+            self.fill_table(self.display_data)
             return key_value
         return None
 
@@ -320,27 +344,60 @@ class TablesWindowController:
         if selected_row == -1:
             return None
 
-        return self.current_data.get_items()[selected_row]
+        return self.display_data.get_items()[selected_row]
 
     def save_item(self, data: Any, edit: bool, selected_row: Optional[int] = None) -> None:
 
 
         if edit and selected_row is not None:
-            self.current_data.update(selected_row, data)
+            key_value = self.__window.dataTableWidget.item(selected_row, 0).text()
+            current_index = next(
+                (index for index, item in enumerate(self.current_data.get_items())
+                 if str(item.GetData()[1][0]) == key_value),
+                None
+            )
+            if current_index is not None:
+                self.current_data.update(current_index, data)
+            self.display_data.update(selected_row, data)
         else:
             self.current_data.add(data)
+            self.display_data.add(data)
+        # if self.find_criteria:
+        #     self.display_data = self.current_data.find_contains(self.find_criteria["Name"],
+        #                                                         self.find_criteria["Goal"])
+        # if self.sort_criteria:
+        #     self.display_data = self.display_data.sort_items(self.sort_key_mapping[self.sort_criteria])
+        # self.fill_table(self.display_data)
+        self.fill_table_with_edited_data()
 
     def sort_table(self, sort_option):
-        sort_key_mapping = {
-            "By start date": lambda x: getattr(x, "start_date", None),
-            "By budget": lambda x: getattr(x, "budget", None),
-            "By name": lambda x: getattr(x, "campaign_name", None)
-        }
-        print(sort_option)
-        if sort_option in sort_key_mapping:
-            print(1)
-            sorted_data = self.current_data.sort_items(sort_key_mapping[sort_option])
-            self.fill_table(sorted_data)
+        # print(sort_option)
+        if sort_option in self.sort_key_mapping:
+            # print(1)
+            self.display_data = self.current_data.sort_items(self.sort_key_mapping[sort_option])
+            self.sort_criteria = sort_option
+            # self.fill_table(self.display_data)
+            self.fill_table_with_edited_data()
+
+    def find_items(self, search_criteria):
+        # print(2)
+        # print(*search_criteria)
+        found_items = self.current_data.find_contains(*search_criteria)
+        # print(*found_items)
+        # print(*found_items if found_items else 111)
+        found_collection = self.current_data.__class__()
+        for item in found_items:
+            found_collection.add(item)
+
+        if len(found_collection) == 0:
+            raise ValueError("No items found!")
+
+        self.display_data = found_collection
+        self.find_criteria = {"Name": search_criteria[0], "Goal": search_criteria[1]}
+        # print(1)
+        # print(self.display_data.get_items())
+        # self.fill_table(self.display_data)
+        self.fill_table_with_edited_data()
 
 
 class AddPlatformWindowController:
