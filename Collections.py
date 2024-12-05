@@ -61,18 +61,35 @@ class ClientCollection(Collection):
         return "Clients"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT company_name FROM Clients;"
+        _, db_clients = db_manager.fetch_data(query_select_all)  # Извлекаем заголовки и строки
+        db_ids = {row[0] for row in db_clients}
+        current_ids = {client.company_name for client in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM Clients WHERE company_name = ?;"
+            for company_name in ids_to_delete:
+                db_manager.execute_query(delete_query, [company_name])
+
         for client in self._items:
             query = """
                 MERGE INTO Clients AS target
-                USING (SELECT ? AS company_name) AS source
+                USING (SELECT ? AS company_name, ? AS phone, ? AS email, ? AS password, 
+                              ? AS address, ? AS type, ? AS business_area, ? AS available_budget) AS source
                 ON target.company_name = source.company_name
                 WHEN MATCHED THEN
                     UPDATE SET
-                        phone = ?, email = ?, password = ?, address = ?, type = ?, business_area = ?, available_budget = ?
+                        phone = source.phone,
+                        email = source.email,
+                        password = source.password,
+                        address = source.address,
+                        type = source.type,
+                        business_area = source.business_area,
+                        available_budget = source.available_budget
                 WHEN NOT MATCHED THEN
                     INSERT (company_name, phone, email, password, address, type, business_area, available_budget)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ;
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
             """
             params = [
                 client.company_name,
@@ -93,6 +110,7 @@ class ClientCollection(Collection):
                 client.available_budget,
             ]
             db_manager.execute_query(query, params)
+
 
 class CampaignCollection(Collection):
     def add(self, item):
@@ -104,18 +122,34 @@ class CampaignCollection(Collection):
         return "Campaigns"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT campaign_id FROM Campaigns;"
+        _, db_campaigns = db_manager.fetch_data(query_select_all)
+        db_ids = {row[0] for row in db_campaigns}
+        current_ids = {campaign.campaign_id for campaign in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM Campaigns WHERE campaign_id = ?;"
+            for campaign_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [campaign_id])
+
         for campaign in self._items:
             query = """
                 MERGE INTO Campaigns AS target
-                USING (SELECT ? AS campaign_id) AS source
+                USING (SELECT ? AS campaign_id, ? AS campaign_name, ? AS start_date, ? AS end_date, 
+                              ? AS goal, ? AS budget, ? AS company_name) AS source
                 ON target.campaign_id = source.campaign_id
                 WHEN MATCHED THEN
                     UPDATE SET
-                        campaign_name = ?, start_date = ?, end_date = ?, goal = ?, budget = ?, company_name = ?
+                        campaign_name = source.campaign_name,
+                        start_date = source.start_date,
+                        end_date = source.end_date,
+                        goal = source.goal,
+                        budget = source.budget,
+                        company_name = source.company_name
                 WHEN NOT MATCHED THEN
                     INSERT (campaign_id, campaign_name, start_date, end_date, goal, budget, company_name)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ;
+                    VALUES (?, ?, ?, ?, ?, ?, ?);
             """
             params = [
                 campaign.campaign_id,
@@ -134,6 +168,7 @@ class CampaignCollection(Collection):
                 campaign.company_name,
             ]
             db_manager.execute_query(query, params)
+
 
 class AdvertisementCollection(Collection):
     def add(self, item):
@@ -145,19 +180,39 @@ class AdvertisementCollection(Collection):
         return "Advertisements"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT advertisement_id FROM Advertisements;"
+        _, db_advertisements = db_manager.fetch_data(query_select_all)
+        db_ids = {row[0] for row in db_advertisements}
+        current_ids = {ad.advertisement_id for ad in self._items}
+        ids_to_delete = db_ids - current_ids
+        if ids_to_delete:
+            delete_query = "DELETE FROM Advertisements WHERE advertisement_id = ?;"
+            for advertisement_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [advertisement_id])
         for advertisement in self._items:
             query = """
                 MERGE INTO Advertisements AS target
-                USING (SELECT ? AS advertisement_id) AS source
+                USING (SELECT ? AS advertisement_id, ? AS text, ? AS format, ? AS send_time, ? AS topic, 
+                              ? AS language, ? AS attachment, ? AS clicks, ? AS views, ? AS campaign_id, ? AS platform_id) AS source
                 ON target.advertisement_id = source.advertisement_id
                 WHEN MATCHED THEN
                     UPDATE SET
-                        text = ?, format = ?, send_time = ?, topic = ?, language = ?, attachment = ?, clicks = ?, views = ?, campaign_id = ?, platform_id = ?
+                        text = source.text,
+                        format = source.format,
+                        send_time = source.send_time,
+                        topic = source.topic,
+                        language = source.language,
+                        attachment = source.attachment,
+                        clicks = source.clicks,
+                        views = source.views,
+                        campaign_id = source.campaign_id,
+                        platform_id = source.platform_id
                 WHEN NOT MATCHED THEN
                     INSERT (advertisement_id, text, format, send_time, topic, language, attachment, clicks, views, campaign_id, platform_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ;
             """
+
             params = [
                 advertisement.advertisement_id,
                 advertisement.text,
@@ -184,6 +239,7 @@ class AdvertisementCollection(Collection):
             ]
             db_manager.execute_query(query, params)
 
+
 class MediaPlatformCollection(Collection):
     def add(self, item):
         if not isinstance(item, MediaPlatform):
@@ -194,18 +250,32 @@ class MediaPlatformCollection(Collection):
         return "Media Platforms"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT platform_id FROM MediaPlatforms;"
+        _, db_platforms = db_manager.fetch_data(query_select_all)
+        db_ids = {row[0] for row in db_platforms}
+        current_ids = {platform.platform_id for platform in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM MediaPlatforms WHERE platform_id = ?;"
+            for platform_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [platform_id])
+
         for platform in self._items:
             query = """
                 MERGE INTO MediaPlatforms AS target
-                USING (SELECT ? AS platform_id) AS source
+                USING (SELECT ? AS platform_id, ? AS platform_name, ? AS platform_type, 
+                              ? AS main_ad_format, ? AS audience_size) AS source
                 ON target.platform_id = source.platform_id
                 WHEN MATCHED THEN
                     UPDATE SET
-                        platform_name = ?, platform_type = ?, main_ad_format = ?, audience_size = ?
+                        platform_name = source.platform_name,
+                        platform_type = source.platform_type,
+                        main_ad_format = source.main_ad_format,
+                        audience_size = source.audience_size
                 WHEN NOT MATCHED THEN
                     INSERT (platform_id, platform_name, platform_type, main_ad_format, audience_size)
-                    VALUES (?, ?, ?, ?, ?)
-                ;
+                    VALUES (?, ?, ?, ?, ?);
             """
             params = [
                 platform.platform_id,
@@ -231,18 +301,29 @@ class CampaignPlatformCollection(Collection):
         return "CampaignPlatformCollection"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT campaign_id, platform_id FROM CampaignPlatforms;"
+        _, db_campaign_platforms = db_manager.fetch_data(query_select_all)
+        db_ids = {(row[0], row[1]) for row in db_campaign_platforms}
+        current_ids = {(cp.campaign_id, cp.platform_id) for cp in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM CampaignPlatforms WHERE campaign_id = ? AND platform_id = ?;"
+            for campaign_id, platform_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [campaign_id, platform_id])
+
         for cp in self._items:
             query = """
-                MERGE INTO CampaignPlatforms AS target
-                USING (SELECT ? AS campaign_id, ? AS platform_id) AS source
-                ON target.campaign_id = source.campaign_id AND target.platform_id = source.platform_id
-                WHEN MATCHED THEN
-                    UPDATE SET budget_allocation = ?
-                WHEN NOT MATCHED THEN
-                    INSERT (campaign_id, platform_id, budget_allocation)
-                    VALUES (?, ?, ?)
-                ;
-            """
+                    MERGE INTO CampaignPlatforms AS target
+                    USING (SELECT ? AS campaign_id, ? AS platform_id, ? AS budget_allocation) AS source
+                    ON target.campaign_id = source.campaign_id AND target.platform_id = source.platform_id
+                    WHEN MATCHED THEN
+                        UPDATE SET
+                            budget_allocation = source.budget_allocation
+                    WHEN NOT MATCHED THEN
+                        INSERT (campaign_id, platform_id, budget_allocation)
+                        VALUES (?, ?, ?);
+                """
             params = [
                 cp.campaign_id,
                 cp.platform_id,
@@ -263,21 +344,40 @@ class AudienceSegmentCollection(Collection):
         return "Audience Segments"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT segment_id FROM AudienceSegments;"
+        _, db_segments = db_manager.fetch_data(query_select_all)
+        db_ids = {row[0] for row in db_segments}
+        current_ids = {segment.segment_id for segment in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM AudienceSegments WHERE segment_id = ?;"
+            for segment_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [segment_id])
+
         for segment in self._items:
             query = """
-                MERGE INTO AudienceSegments AS target
-                USING (SELECT ? AS segment_id) AS source
-                ON target.segment_id = source.segment_id
-                WHEN MATCHED THEN
-                    UPDATE SET
-                        segment_name = ?, age_range = ?, gender = ?, location = ?, general_interest = ?, 
-                        socioeconomic_status = ?, language = ?, behavioral_characteristics = ?, device_used = ?
-                WHEN NOT MATCHED THEN
-                    INSERT (segment_id, segment_name, age_range, gender, location, general_interest, 
-                            socioeconomic_status, language, behavioral_characteristics, device_used)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ;
-            """
+                    MERGE INTO AudienceSegments AS target
+                    USING (SELECT ? AS segment_id, ? AS segment_name, ? AS age_range, ? AS gender, 
+                                  ? AS location, ? AS general_interest, ? AS socioeconomic_status, 
+                                  ? AS language, ? AS behavioral_characteristics, ? AS device_used) AS source
+                    ON target.segment_id = source.segment_id
+                    WHEN MATCHED THEN
+                        UPDATE SET
+                            segment_name = source.segment_name,
+                            age_range = source.age_range,
+                            gender = source.gender,
+                            location = source.location,
+                            general_interest = source.general_interest,
+                            socioeconomic_status = source.socioeconomic_status,
+                            language = source.language,
+                            behavioral_characteristics = source.behavioral_characteristics,
+                            device_used = source.device_used
+                    WHEN NOT MATCHED THEN
+                        INSERT (segment_id, segment_name, age_range, gender, location, general_interest, 
+                                socioeconomic_status, language, behavioral_characteristics, device_used)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """
             params = [
                 segment.segment_id,
                 segment.segment_name,
@@ -312,25 +412,33 @@ class SegmentPlatformCollection(Collection):
         return "SegmentPlatformCollection"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT segment_id, platform_id FROM SegmentPlatforms;"
+        _, db_segment_platforms = db_manager.fetch_data(query_select_all)
+        db_ids = {(row[0], row[1]) for row in db_segment_platforms}
+        current_ids = {(sp.segment_id, sp.platform_id) for sp in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM SegmentPlatforms WHERE segment_id = ? AND platform_id = ?;"
+            for segment_id, platform_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [segment_id, platform_id])
+
         for sp in self._items:
             query = """
-                MERGE INTO SegmentPlatforms AS target
-                USING (SELECT ? AS segment_id, ? AS platform_id) AS source
-                ON target.segment_id = source.segment_id AND target.platform_id = source.platform_id
-                WHEN MATCHED THEN
-                    UPDATE SET segment_id = ?, platform_id = ?
-                WHEN NOT MATCHED THEN
-                    INSERT (segment_id, platform_id)
-                    VALUES (?, ?)
-                ;
-            """
+                    MERGE INTO SegmentPlatforms AS target
+                    USING (SELECT ? AS segment_id, ? AS platform_id) AS source
+                    ON target.segment_id = source.segment_id AND target.platform_id = source.platform_id
+                    WHEN MATCHED THEN
+                        UPDATE SET segment_id = source.segment_id, platform_id = source.platform_id
+                    WHEN NOT MATCHED THEN
+                        INSERT (segment_id, platform_id)
+                        VALUES (?, ?);
+                """
             params = [
                 sp.segment_id,
                 sp.platform_id,
                 sp.segment_id,
-                sp.platform_id,
-                sp.segment_id,
-                sp.platform_id,
+                sp.platform_id
             ]
             db_manager.execute_query(query, params)
 
@@ -344,18 +452,28 @@ class CampaignSegmentCollection(Collection):
         return "CampaignSegmentCollection"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT campaign_id, segment_id FROM CampaignSegments;"
+        _, db_campaign_segments = db_manager.fetch_data(query_select_all)
+        db_ids = {(row[0], row[1]) for row in db_campaign_segments}
+        current_ids = {(cs.campaign_id, cs.segment_id) for cs in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM CampaignSegments WHERE campaign_id = ? AND segment_id = ?;"
+            for campaign_id, segment_id in ids_to_delete:
+                db_manager.execute_query(delete_query, [campaign_id, segment_id])
+
         for cs in self._items:
             query = """
-                MERGE INTO CampaignSegments AS target
-                USING (SELECT ? AS campaign_id, ? AS segment_id) AS source
-                ON target.campaign_id = source.campaign_id AND target.segment_id = source.segment_id
-                WHEN MATCHED THEN
-                    UPDATE SET ad_frequency = ?
-                WHEN NOT MATCHED THEN
-                    INSERT (campaign_id, segment_id, ad_frequency)
-                    VALUES (?, ?, ?)
-                ;
-            """
+                    MERGE INTO CampaignSegments AS target
+                    USING (SELECT ? AS campaign_id, ? AS segment_id, ? AS ad_frequency) AS source
+                    ON target.campaign_id = source.campaign_id AND target.segment_id = source.segment_id
+                    WHEN MATCHED THEN
+                        UPDATE SET ad_frequency = source.ad_frequency
+                    WHEN NOT MATCHED THEN
+                        INSERT (campaign_id, segment_id, ad_frequency)
+                        VALUES (?, ?, ?);
+                """
             params = [
                 cs.campaign_id,
                 cs.segment_id,
@@ -377,21 +495,38 @@ class UserCollection(Collection):
         return "Users"
 
     def save_to_db(self, db_manager):
+        query_select_all = "SELECT email FROM Users;"
+        _, db_users = db_manager.fetch_data(query_select_all)
+        db_ids = {row[0] for row in db_users}
+        current_ids = {user.email for user in self._items}
+        ids_to_delete = db_ids - current_ids
+
+        if ids_to_delete:
+            delete_query = "DELETE FROM Users WHERE email = ?;"
+            for email in ids_to_delete:
+                db_manager.execute_query(delete_query, [email])
+
         for user in self._items:
             query = """
-                MERGE INTO Users AS target
-                USING (SELECT ? AS email) AS source
-                ON target.email = source.email
-                WHEN MATCHED THEN
-                    UPDATE SET
-                        password = ?, age = ?, gender = ?, country = ?, account_creation_date = ?, 
-                        last_purchase_date = ?, segment_id = ?
-                WHEN NOT MATCHED THEN
-                    INSERT (email, password, age, gender, country, account_creation_date, 
-                            last_purchase_date, segment_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ;
-            """
+                    MERGE INTO Users AS target
+                    USING (SELECT ? AS email, ? AS password, ? AS age, ? AS gender, 
+                                  ? AS country, ? AS account_creation_date, 
+                                  ? AS last_purchase_date, ? AS segment_id) AS source
+                    ON target.email = source.email
+                    WHEN MATCHED THEN
+                        UPDATE SET
+                            password = source.password,
+                            age = source.age,
+                            gender = source.gender,
+                            country = source.country,
+                            account_creation_date = source.account_creation_date,
+                            last_purchase_date = source.last_purchase_date,
+                            segment_id = source.segment_id
+                    WHEN NOT MATCHED THEN
+                        INSERT (email, password, age, gender, country, account_creation_date, 
+                                last_purchase_date, segment_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                """
             params = [
                 user.email,
                 user.password,

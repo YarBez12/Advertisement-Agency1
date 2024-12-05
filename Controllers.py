@@ -32,6 +32,7 @@ class AddAdvertisementWindowController:
         return True
 
     def get_data(self) -> Optional[Advertisement]:
+        send_date_qdate = self.__window.sendDateEdit.date()
         campaign_name = self.__window.campaignComboBox.currentText().strip()
         campaign = next((c for c in InitialData.Campaigns.get_items() if c.campaign_name == campaign_name), None)
         platform_name = self.__window.platformComboBox.currentText().strip()
@@ -40,7 +41,8 @@ class AddAdvertisementWindowController:
             advertisement_id=int(self.__window.idLineEdit.text().strip()),
             text=self.__window.textLineEdit.text().strip(),
             format=self.__window.formatComboBox.currentText(),
-            send_time=self.__window.sendDateEdit.date().toString("yyyy-MM-dd"),
+            send_time=datetime.combine(send_date_qdate.toPyDate(),
+                                        datetime.min.time()) if self.__window.sendDateEdit.isEnabled() else None,
             topic=self.__window.topicLineEdit.text().strip(),
             language=self.__window.languageComboBox.currentText(),
             attachment=self.__window.attachmentLineEdit.text().strip(),
@@ -58,6 +60,7 @@ class AddAdvertisementWindowController:
         self.__window.textLineEdit.clear()
         self.__window.formatComboBox.setCurrentIndex(0)
         self.__window.sendDateEdit.setDate(QDate.currentDate().addMonths(1))
+        self.__window.sendDateEdit.setEnabled(True)
         self.__window.topicLineEdit.clear()
         self.__window.languageComboBox.setCurrentIndex(0)
         self.__window.attachmentLineEdit.clear()
@@ -70,8 +73,13 @@ class AddAdvertisementWindowController:
         self.__window.idLineEdit.setText(str(advertisement.advertisement_id))
         self.__window.textLineEdit.setText(advertisement.text or "")
         self.__window.formatComboBox.setCurrentText(advertisement.format or "")
-        self.__window.sendDateEdit.setDate(
-            QDate.fromString(advertisement.send_time, "yyyy-MM-dd") if advertisement.send_time else QDate.currentDate())
+        if advertisement.send_time:
+            self.__window.sendDateEdit.setDate(advertisement.send_time)
+            self.__window.sendDateEdit.setEnabled(True)
+            self.__window.sendDateEdit.setStyleSheet("")
+        else:
+            self.__window.sendDateEdit.setEnabled(False)
+            self.__window.sendDateEdit.setStyleSheet("background-color: lightgray;")
         self.__window.topicLineEdit.setText(advertisement.topic or "")
         self.__window.languageComboBox.setCurrentText(advertisement.language or "")
         self.__window.attachmentLineEdit.setText(advertisement.attachment or "")
@@ -118,13 +126,16 @@ class AddCampaignWindowController:
         return True
 
     def get_data(self) -> Optional[Campaign]:
+        start_date_qdate = self.__window.startDateEdit.date()
+        end_date_qdate = self.__window.endDateEdit.date()
+
         return Campaign(
             campaign_id=int(self.__window.idLineEdit.text().strip()),
             campaign_name=self.__window.nameLineEdit.text().strip(),
-            start_date=self.__window.startDateEdit.date().toString("yyyy-MM-dd"),
-            end_date=self.__window.endDateEdit.date().toString("yyyy-MM-dd"),
+            start_date=datetime.combine(start_date_qdate.toPyDate(), datetime.min.time()) if self.__window.startDateEdit.isEnabled() else None,
+            end_date=datetime.combine(end_date_qdate.toPyDate(), datetime.min.time()) if self.__window.endDateEdit.isEnabled() else None,
             goal=self.__window.goalLineEdit.text().strip(),
-            budget=self.__window.budgetSpinBox.value(),
+            budget=self.__window.budgetSpinBox.value() if self.__window.budgetSpinBox.isEnabled() else None,
             company_name=self.__window.companyComboBox.currentText(),
         )
 
@@ -134,17 +145,43 @@ class AddCampaignWindowController:
         self.__window.nameLineEdit.setPlaceholderText(f"Campaign #{max_id + 1}")
         self.__window.startDateEdit.setDate(QDate.currentDate())
         self.__window.endDateEdit.setDate(QDate.currentDate().addYears(5))
+        self.__window.startDateEdit.setEnabled(True)
+        self.__window.endDateEdit.setEnabled(True)
+        self.__window.budgetSpinBox.setEnabled(True)
         self.__window.goalLineEdit.clear()
         self.__window.budgetSpinBox.setValue(1000)
         self.__window.companyComboBox.setCurrentIndex(0)
 
     def set_data(self, campaign: Campaign) -> None:
+        print(campaign.start_date)
+        print(type(campaign.start_date))
         self.__window.idLineEdit.setText(str(campaign.campaign_id))
         self.__window.nameLineEdit.setText(campaign.campaign_name or "")
-        self.__window.startDateEdit.setDate(QDate.fromString(campaign.start_date, "yyyy-MM-dd"))
-        self.__window.endDateEdit.setDate(QDate.fromString(campaign.end_date, "yyyy-MM-dd"))
+        if campaign.start_date:
+            self.__window.startDateEdit.setDate(campaign.start_date)
+            self.__window.startDateEdit.setEnabled(True)
+            self.__window.startDateEdit.setStyleSheet("")
+        else:
+            self.__window.startDateEdit.setEnabled(False)
+            self.__window.startDateEdit.setStyleSheet("background-color: lightgray;")
+
+        if campaign.end_date:
+            self.__window.endDateEdit.setDate(campaign.end_date)
+            self.__window.endDateEdit.setEnabled(True)
+            self.__window.endDateEdit.setStyleSheet("")
+        else:
+            self.__window.endDateEdit.setEnabled(False)
+            self.__window.endDateEdit.setStyleSheet("background-color: lightgray;")
+
+        if campaign.budget is not None:
+            self.__window.budgetSpinBox.setValue(campaign.budget)
+            self.__window.budgetSpinBox.setEnabled(True)
+            self.__window.budgetSpinBox.setStyleSheet("")
+        else:
+            self.__window.budgetSpinBox.setEnabled(False)
+            self.__window.budgetSpinBox.setStyleSheet("background-color: lightgray;")
+
         self.__window.goalLineEdit.setText(campaign.goal or "")
-        self.__window.budgetSpinBox.setValue(campaign.budget or 0)
         self.__window.companyComboBox.setCurrentText(campaign.company_name or "")
 
 
@@ -204,12 +241,40 @@ class TablesWindowController:
 
     def fill_table(self, data) -> None:
         headers = data[0].GetData()[0]
+        related_data_map = {
+            "Segment ID": {
+                "map": {segment.segment_id: segment.segment_name for segment in
+                        InitialData.AudienceSegments.get_items()},
+                "new_header": "Segment Name",
+            },
+            "Platform ID": {
+                "map": {platform.platform_id: platform.platform_name for platform in
+                        InitialData.MediaPlatforms.get_items()},
+                "new_header": "Platform Name",
+            },
+            "Campaign ID": {
+                "map": {campaign.campaign_id: campaign.campaign_name for campaign in InitialData.Campaigns.get_items()},
+                "new_header": "Campaign Name",
+            },
+        }
+        updated_headers = [
+            related_data_map[header]["new_header"] if header in related_data_map else header
+            for header in headers
+        ]
         self.__window.dataTableWidget.setRowCount(len(data))
         self.__window.dataTableWidget.setColumnCount(len(headers))
-        self.__window.dataTableWidget.setHorizontalHeaderLabels(headers)
+        self.__window.dataTableWidget.setHorizontalHeaderLabels(updated_headers)
         for row_ind, row_data in enumerate(data.get_items()):
             for col_ind, col_data in enumerate(row_data.GetData()[1]):
-                item = QTableWidgetItem(str(col_data))
+                if col_data:
+                    header_name = headers[col_ind]
+                    if header_name in related_data_map and col_data in related_data_map[header_name]["map"]:
+                        display_value = related_data_map[header_name]["map"][col_data]
+                    else:
+                        display_value = str(col_data)
+                    item = QTableWidgetItem(display_value)
+                else:
+                    item = QTableWidgetItem("")
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 self.__window.dataTableWidget.setItem(row_ind, col_ind, item)
 
@@ -257,6 +322,8 @@ class TablesWindowController:
         return self.current_data.get_items()[selected_row]
 
     def save_item(self, data: Any, edit: bool, selected_row: Optional[int] = None) -> None:
+
+
         if edit and selected_row is not None:
             self.current_data.update(selected_row, data)
         else:
@@ -426,7 +493,7 @@ class AddUserWindowController:
             self.__window.lastPurchaseDateEdit.setDate(QDate.fromString(last_purchase_date_str, "yyyy-MM-dd"))
         else:
             self.__window.lastPurchaseDateEdit.clear()
-        
+
         segment = next((s for s in InitialData.AudienceSegments.get_items() if s.segment_id == user.segment_id), None)
         if segment:
             self.__window.segmentComboBox.setCurrentText(segment.segment_name)
