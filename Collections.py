@@ -51,6 +51,18 @@ class Collection:
     def get_str_models_name(self):
         return "Collection"
 
+    def sort_items(self, key_func):
+        sorted_collection = self.__class__()
+        sorted_collection._items = sorted(
+            self._items,
+            key=lambda x: (
+                key_func(x) is None,  # Перемещаем None в конец
+                str(key_func(x))  # Преобразуем значения в строки для сравнения
+            )
+        )
+        return sorted_collection
+
+
 class ClientCollection(Collection):
     def add(self, item):
         if not isinstance(item, Client):

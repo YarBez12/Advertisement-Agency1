@@ -243,7 +243,7 @@
     </font>
    </property>
    <property name="inputMethodHints">
-    <set>Qt::ImhHiddenText</set>
+    <set>Qt::ImhNone</set>
    </property>
    <property name="text">
     <string>Budget allocation</string>

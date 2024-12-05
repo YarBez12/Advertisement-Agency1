@@ -55,6 +55,9 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
     def set_campaign_name(self, campaign_name: int):
         self.__controller.set_campaign_name(campaign_name)
 
+    def set_platform_name(self, platform_name: int):
+        self.__controller.set_platform_name(platform_name)
+
 
 class AddPlatformWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -168,6 +171,10 @@ class AddUserWindow(QtWidgets.QDialog):
     def reset_data(self):
         self.__controller.reset_data()
 
+    def set_segment_name(self, segment_name: int):
+        self.__controller.set_segment_name(segment_name)
+
+
 
 class AddCampaignWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -178,6 +185,8 @@ class AddCampaignWindow(QtWidgets.QDialog):
         self.startDateButton.clicked.connect(self.toggle_start_date)
         self.endDateButton.clicked.connect(self.toggle_end_date)
         self.budgetButton.clicked.connect(self.toggle_budget)
+        self.budgetAllocationLabel.hide()
+        self.budgetAllocationSpinBox.hide()
         self.__controller = AddCampaignWindowController(self)
         self.companyComboBox.addItems([client.company_name for client in InitialData.Clients.get_items()])
         self.reset_data()
@@ -244,6 +253,18 @@ class AddCampaignWindow(QtWidgets.QDialog):
             self.budgetSpinBox.setStyleSheet("")
             self.budgetButton.setText("Remove budget")
 
+    def set_client_name(self, client_name):
+        self.companyComboBox.setCurrentText(str(client_name))
+        self.companyComboBox.setEnabled(False)
+
+    def show_budget_allocation(self):
+        self.budgetAllocationLabel.show()
+        self.budgetAllocationSpinBox.show()
+
+    def set_budget_allocation(self, value):
+        self.show_budget_allocation()
+        self.budgetAllocationSpinBox.setValue(value)
+
 class AddClientWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -276,6 +297,8 @@ class AddClientWindow(QtWidgets.QDialog):
         self.__controller.set_data(client)
 
 
+
+
 class TablesWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -298,7 +321,17 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.actionAdd.triggered.connect(self.open_item_dialog)
         self.actionUpdate.triggered.connect(lambda: self.open_item_dialog(True))
         self.actionDelete.triggered.connect(self.remove_item)
+        self.sortButton.clicked.connect(self.open_sort_dialog)
         self.__controller.update_table(self.__controller.current_data)
+
+    def open_sort_dialog(self):
+        print(123)
+        sort_dialog = CampaignSortWindow(self)
+        if sort_dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_option = sort_dialog.get_selected_option()
+            print(selected_option)
+            if selected_option:
+                self.__controller.sort_table(selected_option)
 
     def remove_item(self) -> None:
         selected_row = self.dataTableWidget.currentRow()
@@ -361,12 +394,12 @@ class TablesWindow(QtWidgets.QMainWindow):
 
     def open_info_window(self) -> None:
         windows = {
-            # "Clients": ClientWindow,
+            "Clients": ClientWindow,
             "Campaigns": CampaignWindow,
-            # "Advertisements": AdvertisementWindow,
-            # "Media Platforms": PlatformWindow,
-            # "Audience Segments": SegmentWindow,
-            # "Users": UserWindow
+            "Advertisements": AdvertisementWindow,
+            "Media Platforms": PlatformWindow,
+            "Audience Segments": SegmentWindow,
+            "Users": UserWindow
         }
         table_name = self.__controller.current_data.get_str_models_name()
         window_class = windows.get(table_name)
@@ -386,7 +419,20 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.hide()
         info_window.show()
 
+class CampaignSortWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("CampaignSortWindow.ui", self)
+        self.sortButton.clicked.connect(self.accept)
 
+    def get_selected_option(self):
+        if self.startDateRadioButton.isChecked():
+            return "By start date"
+        elif self.budgetRadioButton.isChecked():
+            return "By budget"
+        elif self.nameRadioButton.isChecked():
+            return "By name"
+        return None
 
 
 class CampaignWindow(QtWidgets.QMainWindow):
@@ -649,4 +695,904 @@ class CampaignWindow(QtWidgets.QMainWindow):
         self.close()
 
 
+class ClientWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, client: Client = None, update_callback = None):
+        super().__init__(parent)
+        uic.loadUi("ClientWindow.ui", self)
 
+        self.clients = InitialData.Clients.get_items()
+        self.current_index = self.clients.index(client) if client else 0
+        self.update_callback = update_callback
+        self.update_info()
+        self.nextButton.clicked.connect(self.navigate_next)
+        self.previousButton.clicked.connect(self.navigate_previous)
+        self.editButton.clicked.connect(self.edit_client)
+        self.backButton.clicked.connect(self.go_back)
+        self.addCampaignButton.clicked.connect(self.add_campaign)
+        self.editCampaignButton.clicked.connect(self.edit_campaign)
+        self.removeCampaignButton.clicked.connect(self.remove_campaign)
+
+    def add_campaign(self):
+        dialog = AddCampaignWindow(self)
+        dialog.set_client_name(self.clients[self.current_index].company_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_campaign = dialog.get_data()
+            if new_campaign:
+                InitialData.Campaigns.add(new_campaign)
+                self.update_info()
+
+    def edit_campaign(self):
+        selected_row = self.campaignsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an campaign to edit.")
+            return
+        key_value = self.campaignsTableWidget.item(selected_row, 0).text()
+        selected_campaign = next(
+            (c for c in InitialData.Campaigns.get_items() if str(c.GetData()[1][0]) == key_value),
+            None
+        )
+        dialog = AddCampaignWindow(self)
+        dialog.set_data(selected_campaign)
+        dialog.set_client_name(self.clients[self.current_index].company_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_campaign = dialog.get_data()
+            if updated_campaign:
+                campaign_index = InitialData.Campaigns.get_items().index(selected_campaign)
+                InitialData.Campaigns.update(campaign_index, updated_campaign)
+                self.update_info()
+
+    def remove_campaign(self):
+        selected_row = self.campaignsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an campaign to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected campaign?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            key_value = self.campaignsTableWidget.item(selected_row, 0).text()
+            remove_item = next(
+                (c for c in InitialData.Campaigns.get_items() if str(c.GetData()[1][0]) == key_value),
+                None
+            )
+            if remove_item:
+                InitialData.Campaigns.remove(remove_item)
+            self.update_info()
+
+    def update_info(self):
+        if not self.clients:
+            QtWidgets.QMessageBox.warning(self, "Error", "No clients available.")
+            self.close()
+            return
+
+        client = self.clients[self.current_index]
+        self.nameLabel.setText(f"Name: {client.company_name}")
+        self.phoneLabel.setText(f"Phone: {client.phone}")
+        self.emailLabel.setText(f"Email: {client.email}")
+        self.passwordLabel.setText(f"Password: {client.password}")
+        self.addressLabel.setText(f"Address: {client.address}")
+        self.typeLabel.setText(f"Type: {client.type}")
+        self.areaLabel.setText(f"Business area: {client.business_area}")
+        self.budgetLabel.setText(f"Available budget: {client.available_budget}")
+        campaigns = InitialData.Campaigns.find(company_name=client.company_name)
+
+        if campaigns:
+            headers = campaigns[0].GetData()[0]
+            updated_headers = [header for header in headers if header != "Company Name"]
+            self.campaignsTableWidget.setRowCount(len(campaigns))
+            self.campaignsTableWidget.setColumnCount(len(updated_headers))
+            self.campaignsTableWidget.setHorizontalHeaderLabels(updated_headers)
+
+            for row_ind, row_data in enumerate(campaigns):
+                campaign_data = row_data.GetData()[1]
+                adjusted_data = [value for index, value in enumerate(campaign_data) if headers[index] != "Company Name"]
+                for col_ind, col_data in enumerate(adjusted_data):
+                    item = QTableWidgetItem(str(col_data))
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    self.campaignsTableWidget.setItem(row_ind, col_ind, item)
+        else:
+            self.campaignsTableWidget.clear()
+
+    def navigate_next(self):
+        if self.current_index < len(self.clients) - 1:
+            self.current_index += 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the last client.")
+
+    def navigate_previous(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the first client.")
+
+    def edit_client(self):
+        dialog = AddClientWindow(self)
+        current_client = self.clients[self.current_index]
+        if not current_client:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
+            return
+        # print(self.campaigns[self.current_index])
+        dialog.set_data(current_client)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_client = dialog.get_data()
+            if updated_client:
+                company_name = current_client.company_name
+                for i, client in enumerate(InitialData.Clients.get_items()):
+                    if client.company_name == company_name:
+                        InitialData.Clients.update(i, updated_client)
+                        break
+                self.update_info()
+
+    def go_back(self):
+        if self.update_callback:
+            self.update_callback()
+        self.parent().show()
+        self.close()
+
+
+
+
+
+
+
+
+class PlatformWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, platform: MediaPlatform = None, update_callback = None):
+        super().__init__(parent)
+        uic.loadUi("PlatformWindow.ui", self)
+
+        self.platforms = InitialData.MediaPlatforms.get_items()
+        self.current_index = self.platforms.index(platform) if platform else 0
+        self.update_callback = update_callback
+        self.update_info()
+        self.nextButton.clicked.connect(self.navigate_next)
+        self.previousButton.clicked.connect(self.navigate_previous)
+        self.editButton.clicked.connect(self.edit_platform)
+        self.backButton.clicked.connect(self.go_back)
+        self.addCampaignButton.clicked.connect(self.add_campaign)
+        self.editCampaignButton.clicked.connect(self.edit_campaign)
+        self.removeCampaignButton.clicked.connect(self.remove_campaign)
+        self.addSegmentButton.clicked.connect(self.add_segment)
+        self.editSegmentButton.clicked.connect(self.edit_segment)
+        self.removeSegmentButton.clicked.connect(self.remove_segment)
+        self.addAdvertisementButton.clicked.connect(self.add_advertisement)
+        self.editAdvertisementButton.clicked.connect(self.edit_advertisement)
+        self.removeAdvertisementButton.clicked.connect(self.remove_advertisement)
+
+    def add_campaign(self):
+        dialog = AddCampaignWindow(self)
+        dialog.show_budget_allocation()
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_campaign = dialog.get_data()
+            if new_campaign:
+                InitialData.Campaigns.add(new_campaign)
+                current_platform_id = self.platforms[self.current_index].platform_id
+                campaign_id = new_campaign.campaign_id
+                budget_allocation = dialog.budgetAllocationSpinBox.value()
+                campaign_platform = CampaignPlatform(
+                    campaign_id=campaign_id,
+                    platform_id=current_platform_id,
+                    budget_allocation=budget_allocation
+                )
+                InitialData.CampaignPlatforms.add(campaign_platform)
+                self.update_info()
+
+    def edit_campaign(self):
+        selected_row = self.campaignsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a campaign to edit.")
+            return
+
+        campaign_id = int(
+            self.campaignsTableWidget.item(selected_row, 0).text())
+        selected_campaign = next(
+            (c for c in InitialData.Campaigns.get_items() if c.campaign_id == campaign_id),
+            None)
+        current_platform_id = self.platforms[self.current_index].platform_id
+        campaign_platform = next(
+            (cp for cp in InitialData.CampaignPlatforms.get_items()
+             if cp.campaign_id == campaign_id and cp.platform_id == current_platform_id),
+            None
+        )
+        dialog = AddCampaignWindow(self)
+        dialog.set_data(selected_campaign)
+        dialog.set_budget_allocation(campaign_platform.budget_allocation)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_campaign = dialog.get_data()
+            updated_budget_allocation = dialog.budgetAllocationSpinBox.value()
+            if updated_campaign:
+                for i, campaign in enumerate(InitialData.Campaigns.get_items()):
+                    if campaign.campaign_id == campaign_id:
+                        InitialData.Campaigns.update(i, updated_campaign)
+                        break
+                for i, cp in enumerate(InitialData.CampaignPlatforms.get_items()):
+                    if cp.campaign_id == campaign_id and cp.platform_id == current_platform_id:
+                        cp.budget_allocation = updated_budget_allocation
+                        InitialData.CampaignPlatforms.update(i, cp)
+                        break
+                self.update_info()
+
+    def remove_campaign(self):
+        selected_row = self.campaignsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a campaign to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected campaign?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            campaign_id = int(
+                self.campaignsTableWidget.item(selected_row, 0).text())
+
+            for cp in InitialData.CampaignPlatforms.get_items():
+                if cp.campaign_id == campaign_id:
+                    InitialData.CampaignPlatforms.remove(cp)
+
+            remove_item = next(
+                (c for c in InitialData.Campaigns.get_items() if c.campaign_id == campaign_id),
+                None
+            )
+            if remove_item:
+                InitialData.Campaigns.remove(remove_item)
+            self.update_info()
+
+    def add_segment(self):
+        dialog = AddSegmentWindow(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_segment = dialog.get_data()
+            if new_segment:
+                InitialData.AudienceSegments.add(new_segment)
+                current_platform_id = self.platforms[self.current_index].platform_id
+                segment_id = new_segment.segment_id
+                segment_platform = SegmentPlatform(
+                    segment_id = segment_id,
+                    platform_id=current_platform_id
+                )
+                InitialData.SegmentPlatforms.add(segment_platform)
+                self.update_info()
+
+    def edit_segment(self):
+        selected_row = self.segmentsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a segment to edit.")
+            return
+
+        segment_id = int(
+            self.segmentsTableWidget.item(selected_row, 0).text())
+        selected_segment = next(
+            (s for s in InitialData.AudienceSegments.get_items() if s.segment_id == segment_id),
+            None)
+        current_platform_id = self.platforms[self.current_index].platform_id
+        segment_platform = next(
+            (sp for sp in InitialData.SegmentPlatforms.get_items()
+             if sp.segment_id == segment_id and sp.platform_id == current_platform_id),
+            None
+        )
+        dialog = AddSegmentWindow(self)
+        dialog.set_data(selected_segment)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_segment = dialog.get_data()
+            if updated_segment:
+                for i, segment in enumerate(InitialData.AudienceSegments.get_items()):
+                    if segment.segment_id == segment_id:
+                        InitialData.AudienceSegments.update(i, updated_segment)
+                        break
+                # for i, sp in enumerate(InitialData.SegmentPlatforms.get_items()):
+                #     if sp.segment_id == segment_id and sp.platform_id == current_platform_id:
+                #         InitialData.CampaignPlatforms.update(i, cp)
+                #         break
+                self.update_info()
+
+    def remove_segment(self):
+        selected_row = self.segmentsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a segment to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected segment?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            segment_id = int(
+                self.segmentsTableWidget.item(selected_row, 0).text())
+
+            for sp in InitialData.SegmentPlatforms.get_items():
+                if sp.segment_id == segment_id:
+                    InitialData.SegmentPlatforms.remove(sp)
+
+            remove_item = next(
+                (s for s in InitialData.AudienceSegments.get_items() if s.segment_id == segment_id),
+                None
+            )
+            if remove_item:
+                InitialData.AudienceSegments.remove(remove_item)
+            self.update_info()
+
+    def add_advertisement(self):
+        dialog = AddAdvertisementWindow(self)
+        dialog.set_platform_name(self.platforms[self.current_index].platform_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_advertisement = dialog.get_data()
+            if new_advertisement:
+                InitialData.Advertisements.add(new_advertisement)
+                self.update_info()
+
+    def edit_advertisement(self):
+        selected_row = self.advertisementsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an advertisement to edit.")
+            return
+        key_value = self.advertisementsTableWidget.item(selected_row, 0).text()
+        selected_advertisement = next(
+            (ad for ad in InitialData.Advertisements.get_items() if str(ad.GetData()[1][0]) == key_value),
+            None
+        )
+        dialog = AddAdvertisementWindow(self)
+        dialog.set_data(selected_advertisement)
+        dialog.set_platform_name(self.platforms[self.current_index].platform_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_advertisement = dialog.get_data()
+            if updated_advertisement:
+                advertisement_index = InitialData.Advertisements.get_items().index(selected_advertisement)
+                InitialData.Advertisements.update(advertisement_index, updated_advertisement)
+                self.update_info()
+
+    def remove_advertisement(self):
+        selected_row = self.advertisementsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an advertisement to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected advertisement?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            key_value = self.advertisementsTableWidget.item(selected_row, 0).text()
+            remove_item = next(
+                (ad for ad in InitialData.Advertisements.get_items() if str(ad.GetData()[1][0]) == key_value),
+                None
+            )
+            if remove_item:
+                InitialData.Advertisements.remove(remove_item)
+            self.update_info()
+
+    def update_info(self):
+        if not self.platforms:
+            QtWidgets.QMessageBox.warning(self, "Error", "No platforms available.")
+            self.close()
+            return
+
+        platform = self.platforms[self.current_index]
+        self.idLabel.setText(f"ID: {platform.platform_id}")
+        self.nameLabel.setText(f"Name: {platform.platform_name or 'N/A'}")
+        self.typeLabel.setText(f"Name: {platform.platform_type or 'N/A'}")
+        self.formatLabel.setText(f"Name: {platform.main_ad_format or 'N/A'}")
+        self.sizeLabel.setText(f"Name: {platform.audience_size or 'N/A'}")
+        advertisements = InitialData.Advertisements.find(platform_id=platform.platform_id)
+        campaign_platforms = InitialData.CampaignPlatforms.find(platform_id=platform.platform_id)
+        segment_platforms = InitialData.SegmentPlatforms.find(platform_id = platform.platform_id)
+        if campaign_platforms:
+            campaign_ids = [cp.campaign_id for cp in campaign_platforms]
+            related_campaigns = [c for c in InitialData.Campaigns.get_items() if c.campaign_id in campaign_ids]
+            if related_campaigns:
+                headers = related_campaigns[0].GetData()[0]
+                headers.append("Budget Allocation")
+                budget_map = {cp.campaign_id: cp.budget_allocation for cp in campaign_platforms}
+                self.campaignsTableWidget.setRowCount(len(related_campaigns))
+                self.campaignsTableWidget.setColumnCount(len(headers))
+                self.campaignsTableWidget.setHorizontalHeaderLabels(headers)
+                for row_ind, campaign in enumerate(related_campaigns):
+                    for col_ind, col_data in enumerate(campaign.GetData()[1]):
+                        item = QTableWidgetItem(str(col_data))
+                        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        self.campaignsTableWidget.setItem(row_ind, col_ind, item)
+                    allocation = budget_map.get(campaign.campaign_id, "")
+                    allocation_item = QTableWidgetItem(str(allocation))
+                    allocation_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    self.campaignsTableWidget.setItem(row_ind, len(headers) - 1, allocation_item)
+        else:
+            self.campaignsTableWidget.clear()
+        if segment_platforms:
+            segment_ids = [sp.segment_id for sp in segment_platforms]
+            related_segments = [s for s in InitialData.AudienceSegments.get_items() if s.segment_id in segment_ids]
+            if related_segments:
+                headers = related_segments[0].GetData()[0]
+                # budget_map = {cp.campaign_id: cp.budget_allocation for cp in campaign_platforms}
+                self.segmentsTableWidget.setRowCount(len(related_segments))
+                self.segmentsTableWidget.setColumnCount(len(headers))
+                self.segmentsTableWidget.setHorizontalHeaderLabels(headers)
+                for row_ind, segment in enumerate(related_segments):
+                    for col_ind, col_data in enumerate(segment.GetData()[1]):
+                        item = QTableWidgetItem(str(col_data))
+                        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        self.segmentsTableWidget.setItem(row_ind, col_ind, item)
+        else:
+            self.segmentsTableWidget.clear()
+
+        if advertisements:
+            headers = advertisements[0].GetData()[0]
+            updated_headers = []
+            for header in headers:
+                if header == "Campaign ID":
+                    updated_headers.append("Campaign Name")
+                elif header == "Platform ID":
+                    continue
+                else:
+                    updated_headers.append(header)
+            campaign_map = {campaign.campaign_id: campaign.campaign_name for campaign in
+                            InitialData.Campaigns.get_items()}
+            campaign_id_index = advertisements[0].GetData()[0].index("Campaign ID")
+            platform_id_index = advertisements[0].GetData()[0].index("Platform ID")
+            self.advertisementsTableWidget.setRowCount(len(advertisements))
+            self.advertisementsTableWidget.setColumnCount(len(updated_headers))
+            self.advertisementsTableWidget.setHorizontalHeaderLabels(updated_headers)
+            for row_ind, row_data in enumerate(advertisements):
+                for col_ind, col_data in enumerate(row_data.GetData()[1]):
+                    if col_ind == platform_id_index:
+                        continue
+                    elif col_ind == campaign_id_index:
+                        campaign_name = campaign_map.get(col_data, "")
+                        item = QTableWidgetItem(campaign_name)
+                    else:
+                        item = QTableWidgetItem(str(col_data))
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    adjusted_col_ind = col_ind if col_ind < platform_id_index else col_ind - 1
+                    self.advertisementsTableWidget.setItem(row_ind, adjusted_col_ind, item)
+        else:
+            self.advertisementsTableWidget.clear()
+
+    def navigate_next(self):
+        if self.current_index < len(self.platforms) - 1:
+            self.current_index += 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the last platform.")
+
+    def navigate_previous(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the first platform.")
+
+    def edit_platform(self):
+        dialog = AddPlatformWindow(self)
+        current_platform = self.platforms[self.current_index]
+        if not current_platform:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
+            return
+        # print(self.campaigns[self.current_index])
+        dialog.set_data(current_platform)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_platform = dialog.get_data()
+            if updated_platform:
+                platform_id = current_platform.platform_id
+                for i, platform in enumerate(InitialData.MediaPlatforms.get_items()):
+                    if platform.platform_id == platform_id:
+                        InitialData.MediaPlatforms.update(i, updated_platform)
+                        break
+                self.update_info()
+
+    def go_back(self):
+        if self.update_callback:
+            self.update_callback()
+        self.parent().show()
+        self.close()
+
+
+class SegmentWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, segment: AudienceSegment = None, update_callback = None):
+        super().__init__(parent)
+        uic.loadUi("SegmentWindow.ui", self)
+
+        self.segments = InitialData.AudienceSegments.get_items()
+        self.current_index = self.segments.index(segment) if segment else 0
+        self.update_callback = update_callback
+        self.update_info()
+        self.nextButton.clicked.connect(self.navigate_next)
+        self.previousButton.clicked.connect(self.navigate_previous)
+        self.editButton.clicked.connect(self.edit_segment)
+        self.backButton.clicked.connect(self.go_back)
+        self.addPlatformButton.clicked.connect(self.add_platform)
+        self.editPlatformButton.clicked.connect(self.edit_platform)
+        self.removePlatformButton.clicked.connect(self.remove_platform)
+        self.addUserButton.clicked.connect(self.add_user)
+        self.editUserButton.clicked.connect(self.edit_user)
+        self.removeUserButton.clicked.connect(self.remove_user)
+
+    def add_platform(self):
+        dialog = AddPlatformWindow(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_platform = dialog.get_data()
+            if new_platform:
+                InitialData.MediaPlatforms.add(new_platform)
+                current_segment_id = self.segments[self.current_index].segment_id
+                platform_id = new_platform.platform_id
+                segment_platform = SegmentPlatform(
+                    segment_id=current_segment_id,
+                    platform_id=platform_id
+                )
+                InitialData.SegmentPlatforms.add(segment_platform)
+                self.update_info()
+
+    def edit_platform(self):
+        selected_row = self.platformsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a platform to edit.")
+            return
+
+        platform_id = int(
+            self.platformsTableWidget.item(selected_row, 0).text())
+        selected_platform = next(
+            (p for p in InitialData.MediaPlatforms.get_items() if p.platform_id == platform_id),
+            None)
+        current_segment_id = self.segments[self.current_index].segment_id
+        segment_platform = next(
+            (sp for sp in InitialData.SegmentPlatforms.get_items()
+             if sp.segment_id == current_segment_id and sp.platform_id == platform_id),
+            None
+        )
+        dialog = AddPlatformWindow(self)
+        dialog.set_data(selected_platform)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_platform = dialog.get_data()
+            if updated_platform:
+                for i, platform in enumerate(InitialData.MediaPlatforms.get_items()):
+                    if platform.platform_id == platform_id:
+                        InitialData.MediaPlatforms.update(i, updated_platform)
+                        break
+                # for i, sp in enumerate(InitialData.SegmentPlatforms.get_items()):
+                #     if sp.segment_id == current_segment_id and sp.platform_id == platform_id:
+                #         InitialData.SegmentPlatforms.update(i, sp)
+                #         break
+                self.update_info()
+
+    def remove_platform(self):
+        selected_row = self.platformsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a platform to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected platform?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            platform_id = int(
+                self.platformsTableWidget.item(selected_row, 0).text())
+
+            for sp in InitialData.SegmentPlatforms.get_items():
+                if sp.platform_id == platform_id:
+                    InitialData.SegmentPlatforms.remove(sp)
+
+            remove_item = next(
+                (p for p in InitialData.MediaPlatforms.get_items() if p.platform_id == platform_id),
+                None
+            )
+            if remove_item:
+                InitialData.MediaPlatforms.remove(remove_item)
+            self.update_info()
+
+    def add_user(self):
+        dialog = AddUserWindow(self)
+        dialog.set_segment_name(self.segments[self.current_index].segment_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_user = dialog.get_data()
+            if new_user:
+                InitialData.Users.add(new_user)
+                self.update_info()
+
+    def edit_user(self):
+        selected_row = self.usersTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a user to edit.")
+            return
+        key_value = self.usersTableWidget.item(selected_row, 0).text()
+        selected_user = next(
+            (u for u in InitialData.Users.get_items() if str(u.GetData()[1][0]) == key_value),
+            None
+        )
+        dialog = AddUserWindow(self)
+        dialog.set_data(selected_user)
+        dialog.set_segment_name(self.segments[self.current_index].segment_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_user = dialog.get_data()
+            if updated_user:
+                user_index = InitialData.Users.get_items().index(selected_user)
+                InitialData.Users.update(user_index, updated_user)
+                self.update_info()
+
+
+    def remove_user(self):
+        selected_row = self.usersTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a user to remove.")
+            return
+
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to delete the selected user?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            key_value = self.usersTableWidget.item(selected_row, 0).text()
+            remove_item = next(
+                (u for u in InitialData.Users.get_items() if str(u.GetData()[1][0]) == key_value),
+                None
+            )
+            if remove_item:
+                InitialData.Users.remove(remove_item)
+            self.update_info()
+
+    def update_info(self):
+        if not self.segments:
+            QtWidgets.QMessageBox.warning(self, "Error", "No segments available.")
+            self.close()
+            return
+
+        segment = self.segments[self.current_index]
+        self.idLabel.setText(f"ID: {segment.segment_id}")
+        self.nameLabel.setText(f"Name: {segment.segment_name}")
+        self.ageRangeLabel.setText(f"Age range: {segment.age_range}")
+        self.genderLabel.setText(f"Gender: {segment.gender}")
+        self.locationLabel.setText(f"Location: {segment.location}")
+        self.interestLabel.setText(f"General interest: {segment.general_interest}")
+        self.statusLabel.setText(f"Socioeconomic status: {segment.socioeconomic_status}")
+        self.languageLabel.setText(f"Language: {segment.language}")
+        self.characteristicsLabel.setText(f"Behavioral characteristics: {segment.behavioral_characteristics}")
+        self.deviceLabel.setText(f"Used device: {segment.device_used}")
+        users = InitialData.Users.find(segment_id =segment.segment_id)
+        segment_platforms = InitialData.SegmentPlatforms.find(segment_id=segment.segment_id)
+        if segment_platforms:
+            platform_ids = [sp.platform_id for sp in segment_platforms]
+            related_platforms = [p for p in InitialData.MediaPlatforms.get_items() if p.platform_id in platform_ids]
+            if related_platforms:
+                headers = related_platforms[0].GetData()[0]
+                self.platformsTableWidget.setRowCount(len(related_platforms))
+                self.platformsTableWidget.setColumnCount(len(headers))
+                self.platformsTableWidget.setHorizontalHeaderLabels(headers)
+                for row_ind, platform in enumerate(related_platforms):
+                    for col_ind, col_data in enumerate(platform.GetData()[1]):
+                        item = QTableWidgetItem(str(col_data))
+                        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        self.platformsTableWidget.setItem(row_ind, col_ind, item)
+        else:
+            self.platformsTableWidget.clear()
+        if users:
+            headers = users[0].GetData()[0]
+            updated_headers = []
+            for header in headers:
+                if header == "Segment ID":
+                    continue
+                else:
+                    updated_headers.append(header)
+            # platform_map = {platform.platform_id: platform.platform_name for platform in
+            #                 InitialData.MediaPlatforms.get_items()}
+            user_id_index = users[0].GetData()[0].index("Segment ID")
+            self.usersTableWidget.setRowCount(len(users))
+            self.usersTableWidget.setColumnCount(len(updated_headers))
+            self.usersTableWidget.setHorizontalHeaderLabels(updated_headers)
+            for row_ind, row_data in enumerate(users):
+                for col_ind, col_data in enumerate(row_data.GetData()[1]):
+                    if col_ind == user_id_index:
+                        continue
+                    else:
+                        item = QTableWidgetItem(str(col_data))
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    adjusted_col_ind = col_ind if col_ind < user_id_index else col_ind - 1
+                    self.usersTableWidget.setItem(row_ind, adjusted_col_ind, item)
+        else:
+            self.usersTableWidget.clear()
+
+    def navigate_next(self):
+        if self.current_index < len(self.segments) - 1:
+            self.current_index += 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the last segment.")
+
+    def navigate_previous(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the first segment.")
+
+    def edit_segment(self):
+        dialog = AddSegmentWindow(self)
+        current_segment = self.segments[self.current_index]
+        if not current_segment:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
+            return
+        # print(self.campaigns[self.current_index])
+        dialog.set_data(current_segment)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_segment = dialog.get_data()
+            if updated_segment:
+                segment_id = current_segment.segment_id
+                for i, segment in enumerate(InitialData.AudienceSegments.get_items()):
+                    if segment.segment_id == segment_id:
+                        InitialData.AudienceSegments.update(i, updated_segment)
+                        break
+                self.update_info()
+
+    def go_back(self):
+        if self.update_callback:
+            self.update_callback()
+        self.parent().show()
+        self.close()
+
+
+class AdvertisementWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, advertisement: Advertisement = None, update_callback = None):
+        super().__init__(parent)
+        uic.loadUi("AdvertisementWindow.ui", self)
+
+        self.advertisements = InitialData.Advertisements.get_items()
+        self.current_index = self.advertisements.index(advertisement) if advertisement else 0
+        self.update_callback = update_callback
+        self.update_info()
+        self.nextButton.clicked.connect(self.navigate_next)
+        self.previousButton.clicked.connect(self.navigate_previous)
+        self.editButton.clicked.connect(self.edit_advertisement)
+        self.backButton.clicked.connect(self.go_back)
+
+
+    def update_info(self):
+        if not self.advertisements:
+            QtWidgets.QMessageBox.warning(self, "Error", "No advertisements available.")
+            self.close()
+            return
+
+        advertisement : Advertisement = self.advertisements[self.current_index]
+        self.idLabel.setText(f"ID: {advertisement.advertisement_id}")
+        self.textLabel.setText(f"Text: {advertisement.text}")
+        self.formatLabel.setText(f"Format: {advertisement.format}")
+        self.sendTimeLabel.setText(f"Send Time: {advertisement.send_time}")
+        self.topicLabel.setText(f"Topic: {advertisement.topic}")
+        self.languageLabel.setText(f"Language: {advertisement.language}")
+        self.attachmentLabel.setText(f"Attachment: {advertisement.attachment}")
+        self.clicksLabel.setText(f"Clicks: {advertisement.clicks}")
+        self.viewsLabel.setText(f"Views: {advertisement.views}")
+        campaign_name = next(
+            (campaign.campaign_name for campaign in InitialData.Campaigns.get_items()
+             if campaign.campaign_id == advertisement.campaign_id),
+            "Unknown Campaign"
+        )
+        self.campaignLabel.setText(f"Campaign: {campaign_name}")
+        platform_name = next(
+            (platform.platform_name for platform in InitialData.MediaPlatforms.get_items()
+             if platform.platform_id == advertisement.platform_id),
+            "Unknown Platform"
+        )
+        self.platformLabel.setText(f"Platform: {platform_name}")
+
+
+    def navigate_next(self):
+        if self.current_index < len(self.advertisements) - 1:
+            self.current_index += 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the last advertisement.")
+
+    def navigate_previous(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the first advertisement.")
+
+    def edit_advertisement(self):
+        dialog = AddAdvertisementWindow(self)
+        current_advertisement = self.advertisements[self.current_index]
+        if not current_advertisement:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
+            return
+        # print(self.campaigns[self.current_index])
+        dialog.set_data(current_advertisement)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_advertisement = dialog.get_data()
+            if updated_advertisement:
+                advertisement_id = current_advertisement.advertisement_id
+                for i, advertisement in enumerate(InitialData.Advertisements.get_items()):
+                    if advertisement.advertisement_id == advertisement_id:
+                        InitialData.Advertisements.update(i, updated_advertisement)
+                        break
+                self.update_info()
+
+    def go_back(self):
+        if self.update_callback:
+            self.update_callback()
+        self.parent().show()
+        self.close()
+
+
+class UserWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, user: User = None, update_callback=None):
+        super().__init__(parent)
+        uic.loadUi("UserWindow.ui", self)
+        self.users = InitialData.Users.get_items()
+        self.current_index = self.users.index(user) if user else 0
+        self.update_callback = update_callback
+        self.update_info()
+        self.nextButton.clicked.connect(self.navigate_next)
+        self.previousButton.clicked.connect(self.navigate_previous)
+        self.editButton.clicked.connect(self.edit_user)
+        self.backButton.clicked.connect(self.go_back)
+
+    def update_info(self):
+        if not self.users:
+            QtWidgets.QMessageBox.warning(self, "Error", "No users available.")
+            self.close()
+            return
+        user: User = self.users[self.current_index]
+        self.emailLabel.setText(f"Email: {user.email}")
+        self.passwordLabel.setText(f"Password: {user.password}")
+        self.ageLabel.setText(f"Age: {user.age}")
+        self.genderLabel.setText(f"Gender: {user.gender}")
+        self.countryLabel.setText(f"Country: {user.country}")
+        self.accountCreationDateLabel.setText(f"Account creation date: {user.account_creation_date}")
+        self.lastPurchaseDateLabel.setText(f"Last purchase date: {user.last_purchase_date}")
+        segment_name = next(
+            (segment.segment_name for segment in InitialData.AudienceSegments.get_items()
+             if segment.segment_id == user.segment_id),
+            "Unknown Segment"
+        )
+        self.segmentLabel.setText(f"Audience Segment: {segment_name}")
+
+    def navigate_next(self):
+        if self.current_index < len(self.users) - 1:
+            self.current_index += 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the last user.")
+
+    def navigate_previous(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.update_info()
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "This is the first user.")
+
+    def edit_user(self):
+        dialog = AddUserWindow(self)
+        current_user = self.users[self.current_index]
+        if not current_user:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve user for editing")
+            return
+
+        dialog.set_data(current_user)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            updated_user = dialog.get_data()
+            if updated_user:
+                user_email = current_user.email
+                for i, user in enumerate(InitialData.Users.get_items()):
+                    if user.email == user_email:
+                        InitialData.Users.update(i, updated_user)
+                        break
+                self.update_info()
+
+    def go_back(self):
+        if self.update_callback:
+            self.update_callback()
+        self.parent().show()
+        self.close()

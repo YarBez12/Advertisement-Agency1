@@ -258,7 +258,8 @@ class TablesWindowController:
             },
         }
         updated_headers = [
-            related_data_map[header]["new_header"] if header in related_data_map else header
+            related_data_map[header]["new_header"] if header in related_data_map and headers.index(
+                header) != 0 else header
             for header in headers
         ]
         self.__window.dataTableWidget.setRowCount(len(data))
@@ -268,7 +269,7 @@ class TablesWindowController:
             for col_ind, col_data in enumerate(row_data.GetData()[1]):
                 if col_data:
                     header_name = headers[col_ind]
-                    if header_name in related_data_map and col_data in related_data_map[header_name]["map"]:
+                    if header_name in related_data_map and col_data in related_data_map[header_name]["map"] and col_ind != 0:
                         display_value = related_data_map[header_name]["map"][col_data]
                     else:
                         display_value = str(col_data)
@@ -328,6 +329,18 @@ class TablesWindowController:
             self.current_data.update(selected_row, data)
         else:
             self.current_data.add(data)
+
+    def sort_table(self, sort_option):
+        sort_key_mapping = {
+            "By start date": lambda x: getattr(x, "start_date", None),
+            "By budget": lambda x: getattr(x, "budget", None),
+            "By name": lambda x: getattr(x, "campaign_name", None)
+        }
+        print(sort_option)
+        if sort_option in sort_key_mapping:
+            print(1)
+            sorted_data = self.current_data.sort_items(sort_key_mapping[sort_option])
+            self.fill_table(sorted_data)
 
 
 class AddPlatformWindowController:
@@ -499,5 +512,9 @@ class AddUserWindowController:
             self.__window.segmentComboBox.setCurrentText(segment.segment_name)
         else:
             self.__window.segmentComboBox.setCurrentIndex(0)
+
+    def set_segment_name(self, segment_name):
+        self.__window.segmentComboBox.setCurrentText(str(segment_name))
+        self.__window.segmentComboBox.setEnabled(False)
 
 
