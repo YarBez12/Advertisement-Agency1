@@ -241,13 +241,53 @@ class TablesWindowController:
         self.display_data = InitialData.Clients
         self.sort_criteria = None
         self.find_criteria = None
+        self.filter_criteria = None
         self.sort_key_mapping = {
-            "By start date": lambda x: getattr(x, "start_date", None),
-            "By budget": lambda x: getattr(x, "budget", None),
-            "By name": lambda x: getattr(x, "campaign_name", None)
+            "Campaigns": {
+                "By start date": lambda x: getattr(x, "start_date", None),
+                "By budget": lambda x: getattr(x, "budget", None),
+                "By name": lambda x: getattr(x, "campaign_name", None)
+            },
+            "Clients": {
+                "By company name": lambda x: getattr(x,"company_name", None),
+                "By type": lambda x: getattr(x, "type", None),
+                "By available budget": lambda x: getattr(x, "available_budget", None)
+            }
         }
+        self.find_contains_functions = {
+            "Campaigns": lambda : [self.find_criteria["Name"],
+                                                      self.find_criteria["Goal"]],
+            "Clients": lambda: [self.find_criteria["Name"], self.find_criteria["Email"],
+                                self.find_criteria["Phone"], self.find_criteria["Area"]]
+        }
+        self.find_functions_mapping = {
+            "Campaigns": lambda x: {"Name": x[0], "Goal": x[1]},
+            "Clients": lambda x: {"Name": x[0], "Email": x[1], "Phone": x[2], "Area": x[3]}
+        }
+        self.filter_functions_mapping = {
+            "Advertisements": lambda x: {"Formats": x[0], "Languages": x[1], "Before date": x[2],
+                                         "After date": x[3], "Minimum clicks": x[4]},
+            "Audience Segments": lambda x: {"Genders": x[0], "Locations": x[1], "Devices": x[2],
+                                            "Minimum age": x[3], "Maximum age": x[4]}
+        }
+        self.filter_functions = {
+            "Advertisements": lambda: [self.filter_criteria["Formats"], self.filter_criteria["Languages"],
+                                       self.filter_criteria["Before date"], self.filter_criteria["After date"],
+                                       self.filter_criteria["Minimum clicks"]],
+            "Audience Segments": lambda: [self.filter_criteria["Genders"],self.filter_criteria["Locations"],
+                                          self.filter_criteria["Devices"], self.filter_criteria["Minimum age"],
+                                          self.filter_criteria["Maximum age"]]
+        }
+        # self.find_criteria = {"Name": search_criteria[0], "Goal": search_criteria[1]}
+
+        # found_items = self.current_data.find_contains(self.find_criteria["Name"],
+        #                                               self.find_criteria["Goal"])
+        # found_items = self.current_data.find_contains(*(self.find_contains_functions[self.current_data.get_str_models_name()]()))
 
     def fill_table(self, data) -> None:
+        if not data:
+            self.__window.dataTableWidget.clear()
+            return
         headers = data[0].GetData()[0]
         related_data_map = {
             "Segment ID": {
@@ -290,20 +330,21 @@ class TablesWindowController:
     def update_table(self, data) -> None:
         self.current_data = data
         self.display_data = data
-        self.fill_table_with_edited_data()
+        self.fill_table(data)
         self.__window.databaseNameLabel.setText(data.get_str_models_name())
 
     def fill_table_with_edited_data(self):
         if self.find_criteria:
-            found_items = self.current_data.find_contains(self.find_criteria["Name"],
-                                                          self.find_criteria["Goal"])
-            found_collection = self.current_data.__class__()
-            for item in found_items:
-                found_collection.add(item)
+            found_collection = self.current_data.find_contains(
+                *(self.find_contains_functions[self.current_data.get_str_models_name()]()))
             self.display_data = found_collection
+        elif self.filter_criteria:
+            filter_collection = self.current_data.filter(
+                *(self.filter_functions[self.current_data.get_str_models_name()]()))
+            self.display_data = filter_collection
         if self.sort_criteria:
             # self.display_data = self.current_data.sort_items(self.sort_key_mapping[self.sort_criteria])
-            self.display_data = self.display_data.sort_items(self.sort_key_mapping[self.sort_criteria])
+            self.display_data = self.display_data.sort_items(self.sort_key_mapping[self.current_data.get_str_models_name()][self.sort_criteria])
         self.fill_table(self.display_data)
 
     def navigate_first(self) -> None:
@@ -336,7 +377,7 @@ class TablesWindowController:
         if remove_item:
             self.current_data.remove(remove_item)
             self.display_data.remove(remove_item)
-            self.fill_table(self.display_data)
+            self.fill_table_with_edited_data()
             return key_value
         return None
 
@@ -371,33 +412,30 @@ class TablesWindowController:
         self.fill_table_with_edited_data()
 
     def sort_table(self, sort_option):
-        # print(sort_option)
-        if sort_option in self.sort_key_mapping:
-            # print(1)
-            self.display_data = self.current_data.sort_items(self.sort_key_mapping[sort_option])
+        if sort_option in self.sort_key_mapping[self.current_data.get_str_models_name()]:
+            self.display_data = self.current_data.sort_items(self.sort_key_mapping[self.current_data.get_str_models_name()][sort_option])
             self.sort_criteria = sort_option
-            # self.fill_table(self.display_data)
             self.fill_table_with_edited_data()
 
     def find_items(self, search_criteria):
-        # print(2)
-        # print(*search_criteria)
-        found_items = self.current_data.find_contains(*search_criteria)
-        # print(*found_items)
-        # print(*found_items if found_items else 111)
-        found_collection = self.current_data.__class__()
-        for item in found_items:
-            found_collection.add(item)
+        found_collection = self.current_data.find_contains(*search_criteria)
+
 
         if len(found_collection) == 0:
             raise ValueError("No items found!")
 
         self.display_data = found_collection
-        self.find_criteria = {"Name": search_criteria[0], "Goal": search_criteria[1]}
-        # print(1)
-        # print(self.display_data.get_items())
-        # self.fill_table(self.display_data)
+        self.find_criteria = self.find_functions_mapping[self.current_data.get_str_models_name()](search_criteria)
         self.fill_table_with_edited_data()
+
+    def filter_items(self, filter_options):
+        filter_collection = self.current_data.filter(*filter_options)
+        if len(filter_collection) == 0:
+            raise ValueError("No items found")
+        self.display_data = filter_collection
+        self.filter_criteria = self.filter_functions_mapping[self.current_data.get_str_models_name()](filter_options)
+        self.fill_table_with_edited_data()
+
 
 
 class AddPlatformWindowController:

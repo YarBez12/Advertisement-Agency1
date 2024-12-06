@@ -323,7 +323,7 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.actionDelete.triggered.connect(self.remove_item)
         self.sortButton.clicked.connect(self.open_sort_dialog)
         self.findButton.clicked.connect(self.open_find_dialog)
-        # self.filterButton.clicked.connect(self.open_filter_dialog)
+        self.filterButton.clicked.connect(self.open_filter_dialog)
         self.resetButton.clicked.connect(self.reset_editing)
         # self.sortButton.setVisible(False)
         # self.findButton.setVisible(False)
@@ -333,12 +333,13 @@ class TablesWindow(QtWidgets.QMainWindow):
     def reset_editing(self):
         self.__controller.find_criteria = None
         self.__controller.sort_criteria = None
+        self.__controller.filter_criteria = None
         self.__controller.display_data = self.__controller.current_data
         self.__controller.update_table(self.__controller.current_data)
     def open_sort_dialog(self):
-        # print(123)
         sort_dialogs = {
-            "Campaigns" : CampaignSortWindow
+            "Campaigns" : CampaignSortWindow,
+            "Clients": ClientSortWindow
         }
         dialog = sort_dialogs.get(self.__controller.current_data.get_str_models_name(), None)
         if dialog:
@@ -355,7 +356,8 @@ class TablesWindow(QtWidgets.QMainWindow):
 
     def open_find_dialog(self):
         find_dialogs = {
-            "Campaigns" : CampaignFindWindow
+            "Campaigns" : CampaignFindWindow,
+            "Clients": ClientFindWindow
         }
         dialog = find_dialogs.get(self.__controller.current_data.get_str_models_name(), None)
         if dialog:
@@ -369,6 +371,25 @@ class TablesWindow(QtWidgets.QMainWindow):
             if search_criteria:
                 try:
                     self.__controller.find_items(search_criteria)
+                except ValueError as e:
+                    QtWidgets.QMessageBox.warning(self, "No data", str(e))
+
+    def open_filter_dialog(self):
+        filter_dialogs = {
+            "Advertisements": AdvertisementFilterWindow,
+            "Audience Segments": SegmentFilterWindow
+        }
+        dialog = filter_dialogs.get(self.__controller.current_data.get_str_models_name(), None)
+        if dialog:
+            filter_dialog = dialog(self, self.__controller.filter_criteria)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Unavailable function", "This button is unavailable")
+            return
+        if filter_dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filter_criteria = filter_dialog.get_filter_criteria()
+            if filter_criteria:
+                try:
+                    self.__controller.filter_items(filter_criteria)
                 except ValueError as e:
                     QtWidgets.QMessageBox.warning(self, "No data", str(e))
 
@@ -457,6 +478,84 @@ class TablesWindow(QtWidgets.QMainWindow):
         info_window = window_class(self, selected_item, update_callback)
         self.hide()
         info_window.show()
+
+class SegmentFilterWindow(QtWidgets.QDialog):
+    def __init__(self, parent = None, criteria = None):
+        super().__init__(parent)
+        uic.loadUi("SegmentFilterWindow.ui", self)
+        self.findButton.clicked.connect(self.accept)
+        self.genderListWidget.addItems(["Male", "Female", "Other"])
+        self.genderListWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.locationListWidget.addItems(InitialData.LOCATIONS)
+        self.locationListWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.deviceListWidget.addItems(InitialData.DEVICES)
+        self.deviceListWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        if criteria:
+            for index in range(self.genderListWidget.count()):
+                item = self.genderListWidget.item(index)
+                if item.text() in criteria["Genders"]:
+                    item.setSelected(True)
+            for index in range(self.locationListWidget.count()):
+                item = self.locationListWidget.item(index)
+                if item.text() in criteria["Locations"]:
+                    item.setSelected(True)
+            for index in range(self.deviceListWidget.count()):
+                item = self.deviceListWidget.item(index)
+                if item.text() in criteria["Devices"]:
+                    item.setSelected(True)
+            self.minAgeSpinBox.setValue(criteria["Minimum age"])
+            self.maxAgeSpinBox.setValue(criteria["Maximum age"])
+
+    def get_filter_criteria(self):
+        selected_genders = [item.text() for item in self.genderListWidget.selectedItems()]
+        selected_locations = [item.text() for item in self.locationListWidget.selectedItems()]
+        selected_devices = [item.text() for item in self.deviceListWidget.selectedItems()]
+        minimum_age = self.minAgeSpinBox.value()
+        maximum_age = self.maxAgeSpinBox.value()
+        return [selected_genders, selected_locations, selected_devices, minimum_age, maximum_age]
+class AdvertisementFilterWindow(QtWidgets.QDialog):
+    def __init__(self, parent = None, criteria = None):
+        super().__init__(parent)
+        uic.loadUi("AdvertisementsFilterWindow.ui", self)
+        self.findButton.clicked.connect(self.accept)
+        self.formatListWidget.addItems(InitialData.ADVERTISEMENT_FORMATS)
+        self.formatListWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.languageListWidget.addItems(InitialData.LANGUAGES)
+        self.languageListWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.dateBeforeCheckbox.setChecked(True)
+        self.dateAfterCheckbox.setChecked(True)
+        self.beforeDateEdit.setCalendarPopup(True)
+        self.afterDateEdit.setCalendarPopup(True)
+        if criteria:
+            for index in range(self.formatListWidget.count()):
+                item = self.formatListWidget.item(index)
+                if item.text() in criteria["Formats"]:
+                    item.setSelected(True)
+            for index in range(self.languageListWidget.count()):
+                item = self.languageListWidget.item(index)
+                if item.text() in criteria["Languages"]:
+                    item.setSelected(True)
+            if criteria["Before date"]:
+                self.beforeDateEdit.setDate(criteria["Before date"])
+            else:
+                self.dateBeforeCheckbox.setChecked(False)
+            if criteria["After date"]:
+                self.afterDateEdit.setDate(criteria["After date"])
+            else:
+                self.dateAfterCheckbox.setChecked(False)
+            self.clicksSpinBox.setValue(criteria["Minimum clicks"])
+
+    def get_filter_criteria(self):
+        selected_formats = [item.text() for item in self.formatListWidget.selectedItems()]
+        selected_languages = [item.text() for item in self.languageListWidget.selectedItems()]
+        before_date = datetime.combine(self.beforeDateEdit.date().toPyDate(),
+                      datetime.min.time()) if self.dateBeforeCheckbox.isChecked() else None
+        after_date = datetime.combine(self.afterDateEdit.date().toPyDate(),
+                                       datetime.min.time()) if self.dateAfterCheckbox.isChecked() else None
+        minimum_clicks = self.clicksSpinBox.value()
+        return [selected_formats, selected_languages, before_date, after_date, minimum_clicks]
+
+
 class CampaignFindWindow(QtWidgets.QDialog):
     def __init__(self, parent=None, criteria = None):
         super().__init__(parent)
@@ -470,6 +569,23 @@ class CampaignFindWindow(QtWidgets.QDialog):
         # print(1)
         # print(self.nameLineEdit.text().strip(), self.goalLineEdit.text().strip())
         return [self.nameLineEdit.text().strip(), self.goalLineEdit.text().strip()]
+
+class ClientFindWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None, criteria = None):
+        super().__init__(parent)
+        uic.loadUi("ClientFindWindow.ui", self)
+        self.findButton.clicked.connect(self.accept)
+        if criteria:
+            self.nameLineEdit.setText(criteria["Name"])
+            self.emailLineEdit.setText(criteria["Email"])
+            self.phoneLineEdit.setText(criteria["Phone"])
+            self.areaLineEdit.setText(criteria["Area"])
+
+    def get_search_criteria(self):
+        # print(1)
+        # print(self.nameLineEdit.text().strip(), self.goalLineEdit.text().strip())
+        return [self.nameLineEdit.text().strip(), self.emailLineEdit.text().strip(),
+                self.phoneLineEdit.text().strip(), self.areaLineEdit.text().strip()]
 
 
 class CampaignSortWindow(QtWidgets.QDialog):
@@ -491,6 +607,28 @@ class CampaignSortWindow(QtWidgets.QDialog):
             return "By budget"
         elif self.nameRadioButton.isChecked():
             return "By name"
+        return None
+
+
+class ClientSortWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None, criteria = None):
+        super().__init__(parent)
+        uic.loadUi("ClientSortWindow.ui", self)
+        self.sortButton.clicked.connect(self.accept)
+        if (criteria == "By company name"):
+            self.nameRadioButton.setChecked(True)
+        elif (criteria == "By type"):
+            self.typeRadioButton.setChecked(True)
+        elif (criteria == "By available budget"):
+            self.budgetRadioButton.setChecked(True)
+
+    def get_selected_option(self):
+        if self.nameRadioButton.isChecked():
+            return "By company name"
+        elif self.typeRadioButton.isChecked():
+            return "By type"
+        elif self.budgetRadioButton.isChecked():
+            return "By available budget"
         return None
 
 

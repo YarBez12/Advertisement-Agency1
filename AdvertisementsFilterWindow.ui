@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>432</width>
+    <height>351</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QListWidget" name="formatListWidget">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>20</y>
+     <width>211</width>
+     <height>71</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>30</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Format</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>120</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Language</string>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="languageListWidget">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>110</y>
+     <width>211</width>
+     <height>71</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>190</y>
+     <width>111</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Before date</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>220</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>After date</string>
+   </property>
+  </widget>
+  <widget class="QDateEdit" name="beforeDateEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>190</y>
+     <width>161</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QDateEdit" name="afterDateEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>220</y>
+     <width>161</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>250</y>
+     <width>131</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Minimum clicks</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="clicksSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>250</y>
+     <width>161</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="maximum">
+    <number>1000000</number>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="findButton">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>300</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Find</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="dateBeforeCheckbox">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>190</y>
+     <width>87</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Apply</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="dateAfterCheckbox">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>220</y>
+     <width>87</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Apply</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

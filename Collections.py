@@ -123,6 +123,19 @@ class ClientCollection(Collection):
             ]
             db_manager.execute_query(query, params)
 
+    def find_contains(self, company_name: str, email: str, phone: str, area: str):
+        results = []
+        for item in self._items:
+            company_name_value = item.company_name.lower() if item.company_name else ""
+            email_value = item.email.lower() if item.email else ""
+            phone_value = item.phone.lower() if item.phone else ""
+            area_value = item.business_area.lower() if item.business_area else ""
+
+            if company_name.lower() in company_name_value and email.lower() in email_value \
+                    and phone.lower() in phone_value and area.lower() in area_value:
+                results.append(item)
+        return results
+
 
 class CampaignCollection(Collection):
     def add(self, item):
@@ -182,13 +195,13 @@ class CampaignCollection(Collection):
             db_manager.execute_query(query, params)
 
     def find_contains(self, campaign_name: str, goal: str):
-        results = []
+        results = CampaignCollection()
         for item in self._items:
             campaign_name_value = item.campaign_name.lower() if item.campaign_name else ""
             goal_value = item.goal.lower() if item.goal else ""
 
             if campaign_name.lower() in campaign_name_value and goal.lower() in goal_value:
-                results.append(item)
+                results.add(item)
         return results
 
 
@@ -260,6 +273,22 @@ class AdvertisementCollection(Collection):
                 advertisement.platform_id,
             ]
             db_manager.execute_query(query, params)
+
+    def filter(self, formats=None, languages=None, before_date=None, after_date=None, min_clicks=None):
+        results = AdvertisementCollection()
+        for item in self._items:
+            if formats and item.format not in formats:
+                continue
+            if item.language is None and languages or languages and item.language not in languages:
+                continue
+            if item.send_time is None and before_date is not None or before_date and item.send_time and item.send_time >= before_date:
+                continue
+            if item.send_time is None and after_date is not None or after_date and item.send_time and item.send_time <= after_date:
+                continue
+            if item.clicks is None and min_clicks or min_clicks and item.clicks is not None and item.clicks <= min_clicks:
+                continue
+            results.add(item)
+        return results
 
 
 class MediaPlatformCollection(Collection):
@@ -423,6 +452,22 @@ class AudienceSegmentCollection(Collection):
                 segment.device_used,
             ]
             db_manager.execute_query(query, params)
+
+    def filter(self, genders=None, locations=None, devices=None, min_age=None, max_age =None):
+        results = AudienceSegmentCollection()
+        for item in self._items:
+            if genders and item.gender not in genders:
+                continue
+            if item.location is None and locations or locations and item.location not in locations:
+                continue
+            if item.device_used and devices is None or devices and item.device_used not in devices:
+                continue
+            if min_age and int(item.age_range[:2]) < min_age:
+                continue
+            if max_age and int(item.age_range[3:]) > max_age:
+                continue
+            results.add(item)
+        return results
 
 class SegmentPlatformCollection(Collection):
     def add(self, item):
