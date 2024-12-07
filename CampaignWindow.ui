@@ -63,7 +63,7 @@
    <widget class="QToolButton" name="removePlatformButton">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>460</x>
       <y>530</y>
       <width>55</width>
       <height>22</height>
@@ -107,7 +107,7 @@
    <widget class="QToolButton" name="editPlatformButton">
     <property name="geometry">
      <rect>
-      <x>629</x>
+      <x>409</x>
       <y>530</y>
       <width>41</width>
       <height>22</height>
@@ -133,14 +133,14 @@
    <widget class="QToolButton" name="addPlatformButton">
     <property name="geometry">
      <rect>
-      <x>583</x>
+      <x>258</x>
       <y>530</y>
-      <width>36</width>
+      <width>141</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new platform</string>
     </property>
    </widget>
    <widget class="QLabel" name="budgetLabel">
@@ -264,20 +264,20 @@
    <widget class="QToolButton" name="addAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>594</x>
+      <x>239</x>
       <y>800</y>
-      <width>36</width>
+      <width>161</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new advertisement</string>
     </property>
    </widget>
    <widget class="QToolButton" name="removeAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>691</x>
+      <x>461</x>
       <y>800</y>
       <width>55</width>
       <height>22</height>
@@ -290,7 +290,7 @@
    <widget class="QToolButton" name="editAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>640</x>
+      <x>410</x>
       <y>800</y>
       <width>41</width>
       <height>22</height>
@@ -324,6 +324,58 @@
     </property>
     <property name="text">
      <string>Back</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingPlatformButton">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>530</y>
+      <width>191</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing platform</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingAdvertisementButton">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>800</y>
+      <width>181</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing advertisement</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removePlatformFromCampaignButton">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>530</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this campaign</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removeAdvertisementFromCampaignButton">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>800</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this campaign</string>
     </property>
    </widget>
   </widget>

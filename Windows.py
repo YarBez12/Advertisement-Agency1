@@ -14,6 +14,72 @@ from Controllers import *
 from DatabaseController import DatabaseController
 from Models import *
 
+class UserViewWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, user=None):
+        super().__init__(parent)
+        uic.loadUi("UserViewWindow.ui", self)
+        self.user = user
+        self.viewed_messages = set()
+        self.platformsListWidget.itemDoubleClicked.connect(self.show_ad_for_platform)
+        self.advertisementsListWidget.itemDoubleClicked.connect(self.show_ad_details)
+        self.load_platforms()
+        self.actionLogout.triggered.connect(self.go_back)
+
+    def go_back(self):
+        self.parent().show()
+        self.close()
+
+    def load_platforms(self):
+        self.platformsListWidget.clear()
+        if not self.user or not self.user.segment_id:
+            QtWidgets.QMessageBox.warning(self, "Error", "User is not associated with any audience segment.")
+            return
+        segment_id = self.user.segment_id
+        associated_platforms = [
+            sp for sp in InitialData.SegmentPlatforms.get_items()
+            if sp.segment_id == segment_id
+        ]
+        platform_ids = [sp.platform_id for sp in associated_platforms]
+        platforms = [
+            platform for platform in InitialData.MediaPlatforms.get_items()
+            if platform.platform_id in platform_ids
+        ]
+        for platform in platforms:
+            item = QtWidgets.QListWidgetItem(platform.platform_name)
+            item.setData(Qt.UserRole, platform.platform_id)
+            self.platformsListWidget.addItem(item)
+
+    def show_ad_for_platform(self, item):
+        self.advertisementsListWidget.clear()
+        platform_id = item.data(Qt.UserRole)
+        advertisements = [
+            ad for ad in InitialData.Advertisements.get_items()
+            if ad.platform_id == platform_id
+        ]
+        for ad in advertisements:
+            if ad.advertisement_id not in self.viewed_messages:
+                ad.views = (ad.views or 0) + 1
+                self.viewed_messages.add(ad.advertisement_id)
+        for ad in advertisements:
+            ad_item = QtWidgets.QListWidgetItem(ad.topic)
+            ad_item.setData(Qt.UserRole, ad.advertisement_id)
+            self.advertisementsListWidget.addItem(ad_item)
+
+    def show_ad_details(self, item):
+        advertisement_id = item.data(Qt.UserRole)
+        advertisement = next(
+            (ad for ad in InitialData.Advertisements.get_items() if ad.advertisement_id == advertisement_id), None
+        )
+        if not advertisement:
+            QtWidgets.QMessageBox.warning(self, "Error", "Could not find the selected advertisement.")
+            return
+        advertisement.clicks = (advertisement.clicks or 0) + 1
+        dialog = QtWidgets.QMessageBox(self)
+        dialog.setWindowTitle("Message Details")
+        dialog.setText(f"Message Text: {advertisement.text}")
+        dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        dialog.exec_()
+
 
 class AddAdvertisementWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -32,7 +98,7 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         self.campaignButton.clicked.connect(self.toggle_campaign)
         self.platformButton.clicked.connect(self.toggle_platform)
         self.resetButton.clicked.connect(self.reset_data)
-        self.campaignComboBox.addItems([campaign.campaign_name for campaign in InitialData.Campaigns.get_items()])
+        self.campaignComboBox.addItems([campaign.campaign_name for campaign in InitialData.Campaigns.get_items() if campaign.campaign_name])
         self.platformComboBox.addItems([platform.platform_name for platform in InitialData.MediaPlatforms.get_items()])
         self.reset_data()
 
@@ -77,11 +143,11 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
-                "Unfilled fields",
-                "Please fill in all necessary fields"
+                "Invalid data",
+                validation
             )
         else:
             self.accept()
@@ -156,11 +222,11 @@ class AddPlatformWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Unfilled fields",
-                "Please fill in all necessary fields"
+                validation
             )
         else:
             self.accept()
@@ -228,11 +294,11 @@ class AddSegmentWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Unfilled fields",
-                "Please fill in all necessary fields"
+                validation
             )
         else:
             self.accept()
@@ -255,7 +321,7 @@ class AddUserWindow(QtWidgets.QDialog):
         self.countryComboBox.addItems(InitialData.LOCATIONS)
         self.createdDateEdit.setCalendarPopup(True)
         self.lastPurchaseDateEdit.setCalendarPopup(True)
-        self.segmentComboBox.addItems([segment.segment_name for segment in InitialData.AudienceSegments.get_items()])
+        self.segmentComboBox.addItems([segment.segment_name for segment in InitialData.AudienceSegments.get_items() if segment.segment_name])
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
         self.__controller = AddUserWindowController(self)
@@ -283,11 +349,11 @@ class AddUserWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Unfilled fields",
-                "Please fill in all necessary fields"
+                validation
             )
         else:
             self.accept()
@@ -328,11 +394,11 @@ class AddCampaignWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Unfilled fields",
-                "Please fill in all necessary fields"
+                validation
             )
         else:
             self.accept()
@@ -435,11 +501,11 @@ class AddClientWindow(QtWidgets.QDialog):
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
-        if not validation:
+        if validation:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Unfilled fields",
-                "Please fill in all necessary fields"
+                validation
             )
         else:
             self.accept()
@@ -484,9 +550,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     break
             if appropriate_user:
                 pass
-                # window = UserViewWindow(self, user)
-                # self.hide()
-                # window.show()
+                window = UserViewWindow(self, user)
+                self.hide()
+                window.show()
             else:
                 QtWidgets.QMessageBox.warning(self, "Invalid data", "Email or password is incorrect")
         else:
@@ -1185,6 +1251,133 @@ class ClientSortWindow(QtWidgets.QDialog):
             return "By available budget"
         return None
 
+# class SelectPlatformDialog(QtWidgets.QDialog):
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
+#         uic.loadUi("SelectExistingItemWindow.ui", self)
+#         self.platforms = []
+#         self.selected_platform = None
+#         self.budget_allocation = None
+#         self.addButton.clicked.connect(self.add_platform)
+#         self.budgetButton.clicked.connect(self.toggle_budget)
+#         self.budgetButton.setText("Add budget")
+#         self.budgetSpinBox.setEnabled(False)
+#
+#     def toggle_budget(self) -> None:
+#         if self.budgetSpinBox.isEnabled():
+#             self.budgetSpinBox.setEnabled(False)
+#             self.budgetButton.setText("Add budget")
+#         else:
+#             self.budgetSpinBox.setEnabled(True)
+#             self.budgetButton.setText("Remove budget")
+#
+#     def set_platforms(self, platforms):
+#         self.platforms = platforms
+#         self.platformComboBox.clear()
+#         for platform in platforms:
+#             self.platformComboBox.addItem(platform.platform_name)
+#
+#     def add_platform(self):
+#         selected_index = self.platformComboBox.currentIndex()
+#         if selected_index == -1:
+#             QtWidgets.QMessageBox.warning(self, "Error", "Please select a platform.")
+#             return
+#         self.selected_platform = self.platforms[selected_index]
+#         self.budget_allocation = int(self.budgetSpinBox.value())
+#         self.accept()
+#
+#     def get_selected_platform(self):
+#         return self.selected_platform
+#
+#     def get_budget_allocation(self):
+#         if self.budgetSpinBox.isEnabled():
+#             print(self.budget_allocation)
+#             return self.budget_allocation
+#         else:
+#             return None
+
+class SelectExistingItemDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("SelectExistingItemWindow.ui", self)
+        self.items = []
+        self.selected_item = None
+        self.budget_allocation = None
+        self.addButton.clicked.connect(self.add_item)
+        self.budgetButton.clicked.connect(self.toggle_budget)
+        self.budgetButton.setText("Add budget")
+        self.budgetSpinBox.setEnabled(False)
+        self.budgetButton.setVisible(False)
+        self.budgetSpinBox.setVisible(False)
+        self.budgetLabel.setVisible(False)
+
+    def configure_dialog(self, items, show_budget=False, label_text = "Items"):
+        self.items = items
+        self.itemComboBox.clear()
+        for item in items:
+            self.itemComboBox.addItem(item.platform_name if hasattr(item, "platform_name")
+                                      else item.campaign_name if hasattr(item, "campaign_name")
+            else item.segment_name if hasattr(item, "segment_name")
+            else str(item))
+        self.budgetButton.setVisible(show_budget)
+        self.budgetSpinBox.setVisible(show_budget)
+        self.budgetLabel.setVisible(show_budget)
+        self.itemLabel.setText(label_text)
+
+    def toggle_budget(self) -> None:
+        if self.budgetSpinBox.isEnabled():
+            self.budgetSpinBox.setEnabled(False)
+            self.budgetButton.setText("Add budget")
+        else:
+            self.budgetSpinBox.setEnabled(True)
+            self.budgetButton.setText("Remove budget")
+
+    def add_item(self):
+        selected_index = self.itemComboBox.currentIndex()
+        if selected_index == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an item.")
+            return
+        self.selected_item = self.items[selected_index]
+        self.budget_allocation = int(self.budgetSpinBox.value()) if self.budgetSpinBox.isEnabled() else None
+        self.accept()
+
+    def get_selected_item(self):
+        return self.selected_item
+
+    def get_budget_allocation(self):
+        return self.budget_allocation if self.budgetSpinBox.isEnabled() else None
+
+
+class SelectExistingSingleItemDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("SelectExistingSingleItemWindow.ui", self)
+        self.items = []
+        self.selected_item = None
+        self.addButton.clicked.connect(self.add_item)
+
+    def configure_dialog(self, items, label_text="Items"):
+        self.items = items
+        self.itemComboBox.clear()
+        for item in items:
+            self.itemComboBox.addItem(
+                item.topic if hasattr(item, "topic") else
+                item.email if hasattr(item, "email") else
+                str(item)
+            )
+        self.itemLabel.setText(label_text)
+
+    def add_item(self):
+        selected_index = self.itemComboBox.currentIndex()
+        if selected_index == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an item.")
+            return
+        self.selected_item = self.items[selected_index]
+        self.accept()
+
+    def get_selected_item(self):
+        return self.selected_item
+
 
 class CampaignWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None, campaign: Campaign = None, update_callback = None):
@@ -1205,6 +1398,101 @@ class CampaignWindow(QtWidgets.QMainWindow):
         self.addAdvertisementButton.clicked.connect(self.add_advertisement)
         self.editAdvertisementButton.clicked.connect(self.edit_advertisement)
         self.removeAdvertisementButton.clicked.connect(self.remove_advertisement)
+        self.addExistingAdvertisementButton.clicked.connect(self.add_existing_advertisement)
+        self.addExistingPlatformButton.clicked.connect(self.add_existing_platform)
+        self.removePlatformFromCampaignButton.clicked.connect(self.remove_platform_from_campaign)
+        self.removeAdvertisementFromCampaignButton.clicked.connect(self.remove_advertisement_from_campaign)
+
+    def remove_platform_from_campaign(self):
+        selected_row = self.platformsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a platform to remove from the campaign.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected platform from this campaign?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            platform_id = int(
+                self.platformsTableWidget.item(selected_row, 0).text()
+            )
+            current_campaign_id = self.campaigns[self.current_index].campaign_id
+            campaign_platform = next(
+                (cp for cp in InitialData.CampaignPlatforms.get_items()
+                 if cp.campaign_id == current_campaign_id and cp.platform_id == platform_id),
+                None
+            )
+            if campaign_platform:
+                InitialData.CampaignPlatforms.remove(campaign_platform)
+            self.update_info()
+
+    def remove_advertisement_from_campaign(self):
+        selected_row = self.advertisementsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an advertisement to remove from the campaign.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected advertisement from this campaign?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            advertisement_id = int(
+                self.advertisementsTableWidget.item(selected_row, 0).text()
+            )
+            advertisement = next(
+                (ad for ad in InitialData.Advertisements.get_items() if ad.advertisement_id == advertisement_id),
+                None
+            )
+            if advertisement:
+                advertisement.campaign_id = None
+                advertisement_index = InitialData.Advertisements.get_items().index(advertisement)
+                InitialData.Advertisements.update(advertisement_index, advertisement)
+            self.update_info()
+
+    def add_existing_platform(self):
+        dialog = SelectExistingItemDialog(self)
+        current_campaign_id = self.campaigns[self.current_index].campaign_id
+        used_platform_ids = [
+            cp.platform_id for cp in InitialData.CampaignPlatforms.get_items() if cp.campaign_id == current_campaign_id
+        ]
+        available_platforms = [
+            platform for platform in InitialData.MediaPlatforms.get_items() if
+            platform.platform_id not in used_platform_ids
+        ]
+        dialog.configure_dialog(
+            items=available_platforms,
+            show_budget=True,
+            label_text="Platforms"
+        )
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_platform = dialog.get_selected_item()
+            allocated_budget = dialog.get_budget_allocation()
+            if selected_platform:
+                platform_id = selected_platform.platform_id
+                campaign_platform = CampaignPlatform(
+                    campaign_id=current_campaign_id,
+                    platform_id=platform_id,
+                    budget_allocation=allocated_budget
+                )
+                InitialData.CampaignPlatforms.add(campaign_platform)
+                self.update_info()
+
+    def add_existing_advertisement(self):
+        dialog = SelectExistingSingleItemDialog(self)
+        available_ads = [ad for ad in InitialData.Advertisements.get_items() if ad.campaign_id is None]
+        dialog.configure_dialog(available_ads, "Advertisement topics")
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_advertisement = dialog.get_selected_item()
+            if selected_advertisement:
+                current_campaign_id = self.campaigns[self.current_index].campaign_id
+                selected_advertisement.campaign_id = current_campaign_id
+                advertisement_index = InitialData.Advertisements.get_items().index(selected_advertisement)
+                InitialData.Advertisements.update(advertisement_index, selected_advertisement)
+                self.update_info()
 
     def add_platform(self):
         dialog = AddPlatformWindow(self)
@@ -1615,6 +1903,154 @@ class PlatformWindow(QtWidgets.QMainWindow):
         self.addAdvertisementButton.clicked.connect(self.add_advertisement)
         self.editAdvertisementButton.clicked.connect(self.edit_advertisement)
         self.removeAdvertisementButton.clicked.connect(self.remove_advertisement)
+        self.addExistingAdvertisementButton.clicked.connect(self.add_existing_advertisement)
+        self.addExistingCampaignButton.clicked.connect(self.add_existing_campaign)
+        self.addExistingSegmentButton.clicked.connect(self.add_existing_segment)
+        self.removeCampaignFromPlatformButton.clicked.connect(self.remove_campaign_from_platform)
+        self.removeAdvertisementFromPlatformButton.clicked.connect(self.remove_advertisement_from_platform)
+        self.removeSegmentFromPlatformButton.clicked.connect(self.remove_segment_from_platform)
+
+    def remove_campaign_from_platform(self):
+        selected_row = self.campaignsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a campaign to remove from the platform.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected campaign from this platform?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            campaign_id = int(
+                self.campaignsTableWidget.item(selected_row, 0).text()
+            )
+            current_platform_id = self.platforms[self.current_index].platform_id
+            campaign_platform = next(
+                (cp for cp in InitialData.CampaignPlatforms.get_items()
+                 if cp.campaign_id == campaign_id and cp.platform_id == current_platform_id),
+                None
+            )
+            if campaign_platform:
+                InitialData.CampaignPlatforms.remove(campaign_platform)
+            self.update_info()
+
+    def remove_segment_from_platform(self):
+        selected_row = self.segmentsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a segment to remove from the platform.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected segment from this platform?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            segment_id = int(
+                self.segmentsTableWidget.item(selected_row, 0).text()
+            )
+            current_platform_id = self.platforms[self.current_index].platform_id
+            segment_platform = next(
+                (sp for sp in InitialData.SegmentPlatforms.get_items()
+                 if sp.segment_id == segment_id and sp.platform_id == current_platform_id),
+                None
+            )
+            if segment_platform:
+                InitialData.SegmentPlatforms.remove(segment_platform)
+            self.update_info()
+
+    def remove_advertisement_from_platform(self):
+        selected_row = self.advertisementsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select an advertisement to remove from the platform.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected advertisement from this platform?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            advertisement_id = int(
+                self.advertisementsTableWidget.item(selected_row, 0).text()
+            )
+            advertisement = next(
+                (ad for ad in InitialData.Advertisements.get_items() if ad.advertisement_id == advertisement_id),
+                None
+            )
+            if advertisement:
+                advertisement.platform_id = None
+                advertisement_index = InitialData.Advertisements.get_items().index(advertisement)
+                InitialData.Advertisements.update(advertisement_index, advertisement)
+            self.update_info()
+
+    def add_existing_campaign(self):
+        dialog = SelectExistingItemDialog(self)
+        current_platform_id = self.platforms[self.current_index].platform_id
+        used_campaigns_ids = [
+            cp.campaign_id for cp in InitialData.CampaignPlatforms.get_items() if cp.platform_id == current_platform_id
+        ]
+        available_campaigns = [
+            campaign for campaign in InitialData.Campaigns.get_items() if
+            campaign.campaign_id not in used_campaigns_ids and campaign.campaign_name
+        ]
+        dialog.configure_dialog(
+            items=available_campaigns,
+            show_budget=True,
+            label_text="Campaigns"
+        )
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_campaign = dialog.get_selected_item()
+            allocated_budget = dialog.get_budget_allocation()
+            if selected_campaign:
+                campaign_id = selected_campaign.campaign_id
+                campaign_platform = CampaignPlatform(
+                    campaign_id=campaign_id,
+                    platform_id=current_platform_id,
+                    budget_allocation=allocated_budget
+                )
+                InitialData.CampaignPlatforms.add(campaign_platform)
+                self.update_info()
+
+    def add_existing_segment(self):
+        dialog = SelectExistingItemDialog(self)
+        current_platform_id = self.platforms[self.current_index].platform_id
+        used_segments_ids = [
+            sp.segment_id for sp in InitialData.SegmentPlatforms.get_items() if sp.platform_id == current_platform_id
+        ]
+        available_segments = [
+            segment for segment in InitialData.AudienceSegments.get_items() if
+            segment.segment_id not in used_segments_ids and segment.segment_name
+        ]
+        dialog.configure_dialog(
+            items=available_segments,
+            show_budget=False,
+            label_text="Segments"
+        )
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_segment = dialog.get_selected_item()
+            if selected_segment:
+                segment_id = selected_segment.segment_id
+                segment_platform = SegmentPlatform(
+                    segment_id=segment_id,
+                    platform_id=current_platform_id
+                )
+                InitialData.SegmentPlatforms.add(segment_platform)
+                self.update_info()
+
+    def add_existing_advertisement(self):
+        dialog = SelectExistingSingleItemDialog(self)
+        available_ads = [ad for ad in InitialData.Advertisements.get_items() if ad.platform_id is None]
+        dialog.configure_dialog(available_ads, "Advertisement topics")
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_advertisement = dialog.get_selected_item()
+            if selected_advertisement:
+                current_platform_id = self.platforms[self.current_index].platform_id
+                selected_advertisement.platform_id = current_platform_id
+                advertisement_index = InitialData.Advertisements.get_items().index(selected_advertisement)
+                InitialData.Advertisements.update(advertisement_index, selected_advertisement)
+                self.update_info()
 
     def add_campaign(self):
         dialog = AddCampaignWindow(self)
@@ -1966,6 +2402,96 @@ class SegmentWindow(QtWidgets.QMainWindow):
         self.addUserButton.clicked.connect(self.add_user)
         self.editUserButton.clicked.connect(self.edit_user)
         self.removeUserButton.clicked.connect(self.remove_user)
+        self.addExistingPlatformButton.clicked.connect(self.add_existing_platform)
+        self.addExistingUserButton.clicked.connect(self.add_existing_user)
+        self.removePlatformFromSegmentButton.clicked.connect(self.remove_platform_from_segment)
+        self.removeUserFromSegmentButton.clicked.connect(self.remove_user_from_segment)
+
+    def remove_platform_from_segment(self):
+        selected_row = self.platformsTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a platform to remove from the segment.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected platform from this segment?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            platform_id = int(
+                self.platformsTableWidget.item(selected_row, 0).text()
+            )
+            current_segment_id = self.segments[self.current_index].segment_id
+            segment_platform = next(
+                (sp for sp in InitialData.SegmentPlatforms.get_items()
+                 if sp.segment_id == current_segment_id and sp.platform_id == platform_id),
+                None
+            )
+            if segment_platform:
+                InitialData.SegmentPlatforms.remove(segment_platform)
+            self.update_info()
+
+    def remove_user_from_segment(self):
+        selected_row = self.usersTableWidget.currentRow()
+        if selected_row == -1:
+            QtWidgets.QMessageBox.warning(self, "Error", "Please select a user to remove from the segment.")
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmation",
+            "Are you sure you want to remove the selected user from this segment?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            user_email = self.usersTableWidget.item(selected_row, 0).text()
+            user = next(
+                (user for user in InitialData.Users.get_items() if user.email == user_email),
+                None
+            )
+            if user:
+                user.segment_id = None
+                user_index = InitialData.Users.get_items().index(user)
+                InitialData.Advertisements.update(user_index, user)
+            self.update_info()
+
+    def add_existing_platform(self):
+        dialog = SelectExistingItemDialog(self)
+        current_segment_id = self.segments[self.current_index].segment_id
+        used_platform_ids = [
+            sp.platform_id for sp in InitialData.SegmentPlatforms.get_items() if sp.segment_id == current_segment_id
+        ]
+        available_platforms = [
+            platform for platform in InitialData.MediaPlatforms.get_items() if
+            platform.platform_id not in used_platform_ids
+        ]
+        dialog.configure_dialog(
+            items=available_platforms,
+            label_text="Platforms"
+        )
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_platform = dialog.get_selected_item()
+            if selected_platform:
+                platform_id = selected_platform.platform_id
+                segmend_platform = SegmentPlatform(
+                    segment_id=current_segment_id,
+                    platform_id=platform_id
+                )
+                InitialData.SegmentPlatforms.add(segmend_platform)
+                self.update_info()
+
+    def add_existing_user(self):
+        dialog = SelectExistingSingleItemDialog(self)
+        available_users = [user for user in InitialData.Users.get_items() if user.segment_id is None]
+        dialog.configure_dialog(available_users, "User emails")
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            selected_user = dialog.get_selected_item()
+            if selected_user:
+                current_segment_id = self.segments[self.current_index].segment_id
+                selected_user.segment_id = current_segment_id
+                user_index = InitialData.Users.get_items().index(selected_user)
+                InitialData.Users.update(user_index, selected_user)
+                self.update_info()
 
     def add_platform(self):
         dialog = AddPlatformWindow(self)

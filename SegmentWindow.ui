@@ -63,7 +63,7 @@
    <widget class="QToolButton" name="editPlatformButton">
     <property name="geometry">
      <rect>
-      <x>656</x>
+      <x>441</x>
       <y>590</y>
       <width>41</width>
       <height>22</height>
@@ -130,14 +130,14 @@
    <widget class="QToolButton" name="addUserButton">
     <property name="geometry">
      <rect>
-      <x>614</x>
+      <x>274</x>
       <y>820</y>
-      <width>36</width>
+      <width>161</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new user</string>
     </property>
    </widget>
    <widget class="QLabel" name="interestLabel">
@@ -228,7 +228,7 @@
    <widget class="QToolButton" name="removePlatformButton">
     <property name="geometry">
      <rect>
-      <x>707</x>
+      <x>492</x>
       <y>590</y>
       <width>55</width>
       <height>22</height>
@@ -241,7 +241,7 @@
    <widget class="QToolButton" name="removeUserButton">
     <property name="geometry">
      <rect>
-      <x>711</x>
+      <x>496</x>
       <y>820</y>
       <width>55</width>
       <height>22</height>
@@ -290,20 +290,20 @@
    <widget class="QToolButton" name="addPlatformButton">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>270</x>
       <y>590</y>
-      <width>36</width>
+      <width>161</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new platform</string>
     </property>
    </widget>
    <widget class="QToolButton" name="editUserButton">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>445</x>
       <y>820</y>
       <width>41</width>
       <height>22</height>
@@ -378,6 +378,58 @@
     </property>
     <property name="text">
      <string>Used device</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removeUserFromSegmentButton">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>820</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this segment</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingPlatformButton">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>580</y>
+      <width>181</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing platform</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingUserButton">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>820</y>
+      <width>191</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing user</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removePlatformFromSegmentButton">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>590</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this segment</string>
     </property>
    </widget>
   </widget>

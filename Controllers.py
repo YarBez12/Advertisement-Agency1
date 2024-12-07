@@ -25,11 +25,15 @@ class AddAdvertisementWindowController:
             return -1
 
 
-    def validate_window(self) -> bool:
+    def validate_window(self):
         advertisement_topic = self.__window.topicLineEdit.text().strip()
         if not advertisement_topic:
-            return False
-        return True
+            return "Please fill in the advertisement topic"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+        return ""
 
     def get_data(self) -> Optional[Advertisement]:
         send_date_qdate = self.__window.sendDateEdit.date()
@@ -151,11 +155,15 @@ class AddCampaignWindowController:
         except ValueError:
             return -1
 
-    def validate_window(self) -> bool:
+    def validate_window(self):
         campaign_goal = self.__window.goalLineEdit.text().strip()
         if not campaign_goal:
-            return False
-        return True
+            return "Please fill in the campaign goal"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+        return ""
 
     def get_data(self) -> Optional[Campaign]:
         start_date_qdate = self.__window.startDateEdit.date()
@@ -217,14 +225,24 @@ class AddClientWindowController:
     def __init__(self, window):
         self.__window = window
 
-    def validate_window(self) -> bool:
+    def validate_window(self) :
         client_name = self.__window.nameLineEdit.text().strip()
         client_phone = self.__window.phoneLineEdit.text().strip()
         client_email = self.__window.emailLineEdit.text().strip()
         client_password = self.__window.passwordLineEdit.text().strip()
-        if not client_name or not client_phone or not client_email or not client_password:
-            return False
-        return True
+        if not client_name:
+            return "Please fill in the company name"
+        if not client_phone:
+            return "Please fill in the phone"
+        if not client_email:
+            return "Please fill in the email"
+        if not client_password:
+            return "Please fill in the password"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+        return ""
 
     def get_data(self) -> Optional[Client]:
         address = self.__window.addressLineEdit.text().strip()
@@ -253,6 +271,7 @@ class AddClientWindowController:
 
     def set_data(self, client) -> None:
         self.__window.nameLineEdit.setText(client.company_name or "")
+        self.__window.nameLineEdit.setEnabled(False)
         self.__window.phoneLineEdit.setText(client.phone or "")
         self.__window.emailLineEdit.setText(client.email or "")
         self.__window.passwordLineEdit.setText(client.password or "")
@@ -406,16 +425,60 @@ class TablesWindowController:
             return None
 
         key_value = self.__window.dataTableWidget.item(selected_row, 0).text()
+        table_name = self.current_data.get_str_models_name()
         remove_item = next(
             (item for item in self.display_data.get_items() if str(item.GetData()[1][0]) == key_value),
             None
         )
         if remove_item:
+            if table_name == "Clients":
+                associated_campaigns = [c for c in InitialData.Campaigns.get_items() if
+                                        c.company_name == remove_item.company_name]
+                for campaign in associated_campaigns:
+                    self._remove_campaign_dependencies(campaign)
+                    InitialData.Campaigns.remove(campaign)
+            elif table_name == "Campaigns":
+                self._remove_campaign_dependencies(remove_item)
+            elif table_name == "Media Platforms":
+                self._remove_platform_dependencies(remove_item)
+            elif table_name == "Audience Segments":
+                self._remove_segment_dependencies(remove_item)
             self.current_data.remove(remove_item)
-            self.display_data.remove(remove_item)
+            if self.current_data != self.display_data:
+                self.display_data.remove(remove_item)
             self.fill_table_with_edited_data()
-            return key_value
-        return None
+        return key_value
+
+    def _remove_campaign_dependencies(self, campaign):
+        related_campaign_platforms = [cp for cp in InitialData.CampaignPlatforms.get_items() if
+                                      cp.campaign_id == campaign.campaign_id]
+        for cp in related_campaign_platforms:
+            InitialData.CampaignPlatforms.remove(cp)
+        related_ads = [ad for ad in InitialData.Advertisements.get_items() if ad.campaign_id == campaign.campaign_id]
+        for ad in related_ads:
+            ad.campaign_id = None
+
+    def _remove_platform_dependencies(self, platform):
+        related_campaign_platforms = [cp for cp in InitialData.CampaignPlatforms.get_items() if
+                                      cp.platform_id == platform.platform_id]
+        for cp in related_campaign_platforms:
+            InitialData.CampaignPlatforms.remove(cp)
+        related_segment_platforms = [sp for sp in InitialData.SegmentPlatforms.get_items() if
+                                     sp.platform_id == platform.platform_id]
+        for sp in related_segment_platforms:
+            InitialData.SegmentPlatforms.remove(sp)
+        related_ads = [ad for ad in InitialData.Advertisements.get_items() if ad.platform_id == platform.platform_id]
+        for ad in related_ads:
+            ad.platform_id = None
+
+    def _remove_segment_dependencies(self, segment):
+        related_segment_platforms = [sp for sp in InitialData.SegmentPlatforms.get_items() if
+                                     sp.segment_id == segment.segment_id]
+        for sp in related_segment_platforms:
+            InitialData.SegmentPlatforms.remove(sp)
+        related_users = [user for user in InitialData.Users.get_items() if user.segment_id == segment.segment_id]
+        for user in related_users:
+            user.segment_id = None
 
     def get_item_for_edit(self, selected_row: int) -> Optional[Any]:
         if selected_row == -1:
@@ -476,11 +539,16 @@ class AddPlatformWindowController:
     def __init__(self, window):
         self.__window = window
 
-    def validate_window(self) -> bool:
+    def validate_window(self):
         platform_name = self.__window.nameLineEdit.text().strip()
         if not platform_name:
-            return False
-        return True
+            return "Please fill in the platform name"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+
+        return ""
 
     def select_max_id_from_table(self) -> int:
 
@@ -551,14 +619,24 @@ class AddSegmentWindowController:
     def __init__(self, window):
         self.__window = window
 
-    def validate_window(self) -> bool:
+    def validate_window(self):
         minimum_age = self.__window.minimumSpinBox.value()
         maximum_age = self.__window.maximumSpinBox.value()
         gender = self.__window.genderComboBox.currentText().strip()
         language = self.__window.languageComboBox.currentText().strip()
-        if not minimum_age or not maximum_age or not gender or not language:
-            return False
-        return True
+        if not minimum_age:
+            return "Please fill in the minimum age"
+        if not maximum_age:
+            return "Please fill in the maximum age"
+        if not gender:
+            return "Please fill in the gender"
+        if not language:
+            return "Please fill in the language"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+        return ""
 
     def select_max_id_from_table(self) -> int:
 
@@ -635,16 +713,30 @@ class AddUserWindowController:
     def __init__(self, window):
         self.__window = window
 
-    def validate_window(self) -> bool:
+    def validate_window(self):
         email = self.__window.emailLineEdit.text().strip()
         password = self.__window.passwordLineEdit.text().strip()
         age = self.__window.ageSpinBox.value()
         gender = self.__window.genderComboBox.currentText().strip()
         country = self.__window.countryComboBox.currentText().strip()
         account_creation_date = self.__window.createdDateEdit.text().strip()
-        if not email or not password or not age or not gender or not country or not account_creation_date:
-            return False
-        return True
+        if not email:
+            return "Please fill in the email"
+        if not password:
+            return "Please fill in the password"
+        if not age:
+            return "Please fill in the age"
+        if not gender:
+            return "Please fill in the gender"
+        if not country:
+            return "Please fill in the country"
+        if not account_creation_date:
+            return "Please fill in the account creation date"
+        try:
+            self.get_data()
+        except Exception as e:
+            return str(e)
+        return ""
 
     def get_data(self) -> Optional[User]:
         segment_name = self.__window.segmentComboBox.currentText().strip() if self.__window.segmentComboBox.isEnabled() else None
@@ -680,6 +772,7 @@ class AddUserWindowController:
 
     def set_data(self, user: User) -> None:
         self.__window.emailLineEdit.setText(user.email or "")
+        self.__window.emailLineEdit.setEnabled(False)
         self.__window.passwordLineEdit.setText(user.password or "")
         self.__window.ageSpinBox.setValue(user.age if user.age else 0)
         self.__window.genderComboBox.setCurrentText(user.gender or "")

@@ -63,7 +63,7 @@
    <widget class="QToolButton" name="editCampaignButton">
     <property name="geometry">
      <rect>
-      <x>646</x>
+      <x>399</x>
       <y>400</y>
       <width>41</width>
       <height>22</height>
@@ -130,14 +130,14 @@
    <widget class="QToolButton" name="addAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>617</x>
+      <x>275</x>
       <y>590</y>
-      <width>36</width>
+      <width>131</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new advertisememt</string>
     </property>
    </widget>
    <widget class="QPushButton" name="previousButton">
@@ -210,7 +210,7 @@
    <widget class="QToolButton" name="removeCampaignButton">
     <property name="geometry">
      <rect>
-      <x>697</x>
+      <x>450</x>
       <y>400</y>
       <width>55</width>
       <height>22</height>
@@ -223,7 +223,7 @@
    <widget class="QToolButton" name="removeAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>714</x>
+      <x>467</x>
       <y>590</y>
       <width>55</width>
       <height>22</height>
@@ -254,20 +254,20 @@
    <widget class="QToolButton" name="addCampaignButton">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>268</x>
       <y>400</y>
-      <width>36</width>
+      <width>121</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new campaign</string>
     </property>
    </widget>
    <widget class="QToolButton" name="editAdvertisementButton">
     <property name="geometry">
      <rect>
-      <x>663</x>
+      <x>416</x>
       <y>590</y>
       <width>41</width>
       <height>22</height>
@@ -360,7 +360,7 @@
    <widget class="QToolButton" name="removeSegmentButton">
     <property name="geometry">
      <rect>
-      <x>721</x>
+      <x>474</x>
       <y>790</y>
       <width>55</width>
       <height>22</height>
@@ -373,20 +373,20 @@
    <widget class="QToolButton" name="addSegmentButton">
     <property name="geometry">
      <rect>
-      <x>624</x>
+      <x>272</x>
       <y>790</y>
-      <width>36</width>
+      <width>141</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add new segment</string>
     </property>
    </widget>
    <widget class="QToolButton" name="editSegmentButton">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>423</x>
       <y>790</y>
       <width>41</width>
       <height>22</height>
@@ -394,6 +394,84 @@
     </property>
     <property name="text">
      <string>Edite</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingCampaignButton">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>400</y>
+      <width>191</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing campaign</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removeAdvertisementFromPlatformButton">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>590</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this platform</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingAdvertisementButton">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>590</y>
+      <width>181</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing advertisement</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removeCampaignFromPlatformButton">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>400</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this campaign</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="addExistingSegmentButton">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>790</y>
+      <width>191</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add existing segment</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="removeSegmentFromPlatformButton">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>790</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Remove only for this segment</string>
     </property>
    </widget>
   </widget>

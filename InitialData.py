@@ -37,16 +37,16 @@ LANGUAGES = [
         ]
 
 LOCATIONS = [
-    "United States", "Spain", "China", "India", "Saudi Arabia",
+    "USA", "Spain", "China", "India", "Saudi Arabia", "Canada",
     "Bangladesh", "Brazil", "Ireland", "Japan", "India (Punjab)",
-    "Germany", "South Korea", "France", "Turkey", "Vietnam",
+    "Germany", "South Korea", "France", "Turkey", "Vietnam", "Australia",
     "Italy", "Pakistan", "Thailand", "Poland", "Netherlands",
     "Iran", "Kenya", "Romania", "Greece", "Hungary",
     "Czech Republic", "Finland", "Israel", "Malaysia", "Indonesia",
     "Norway", "Sweden", "Denmark", "Bulgaria", "Serbia",
     "Croatia", "Slovakia", "Ukraine", "Lithuania", "Latvia",
     "Estonia", "Philippines", "Sri Lanka (Tamil Nadu)", "India (Karnataka)", "India (Gujarat)",
-    "India (Maharashtra)", "India (Andhra Pradesh)", "India (Kerala)", "Sri Lanka", "Myanmar (Burma)"
+    "India (Maharashtra)", "India (Andhra Pradesh)", "India (Kerala)", "Sri Lanka", "Myanmar (Burma)", "UK"
 ]
 
 
@@ -71,14 +71,15 @@ CLIENT_AREAS = [
             "Pharmaceuticals",
             "Aerospace",
             "Environmental Services",
-            "Home Services"
+            "Home Services",
+            "Environment"
         ]
 
 PLATFORM_TYPES = [
     "Social Media",
     "Video Streaming",
     "Search Engine",
-    "E-commerce",
+    "E-Commerce",
     "Music Streaming",
     "Messaging",
     "Advertising Network",

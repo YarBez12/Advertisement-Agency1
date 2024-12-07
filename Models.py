@@ -1,6 +1,6 @@
 import os
 import re
-from InitialData import *
+import InitialData
 from datetime import datetime
 
 
@@ -110,7 +110,7 @@ class Client(Model):
 
     @business_area.setter
     def business_area(self, value):
-        if value not in CLIENT_AREAS:
+        if value not in InitialData.CLIENT_AREAS:
             raise ValueError("Business area cannot be empty.")
         self.__business_area = value
 
@@ -165,7 +165,7 @@ class Campaign(Model):
 
     @campaign_name.setter
     def campaign_name(self, value):
-        if len(value) <= 2:
+        if value and len(value) <= 2:
             raise ValueError("Too short campaign name.")
         self.__campaign_name = value
 
@@ -226,10 +226,16 @@ class Campaign(Model):
         self.__company_name = value
 
     @staticmethod
-    def __validate_date(date_str):
+    def __validate_date(date_input):
+
         try:
-            datetime.strptime(date_str, "%Y-%m-%d")
-            return True
+            if isinstance(date_input, datetime):
+                return True
+            elif isinstance(date_input, str):
+                datetime.strptime(date_input, "%Y-%m-%d")
+                return True
+            else:
+                return False
         except ValueError:
             return False
 
@@ -278,7 +284,7 @@ class Advertisement(Model):
 
     @format.setter
     def format(self, value):
-        if value not in ADVERTISEMENT_FORMATS:
+        if value not in InitialData.ADVERTISEMENT_FORMATS:
             raise ValueError("There is no such format in the system")
         self.__format = value
 
@@ -318,7 +324,7 @@ class Advertisement(Model):
 
     @language.setter
     def language(self, value):
-        if value and value not in LANGUAGES:
+        if value and value not in InitialData.LANGUAGES:
             raise ValueError("The is no such language in the system.")
         self.__language = value
 
@@ -331,8 +337,8 @@ class Advertisement(Model):
         if value:
             if not isinstance(value, str):
                 raise TypeError("Attachment must be a string representing the file path.")
-            if not os.path.isfile(value):
-                raise ValueError(f"Attachment must be a valid file path. File not found: {value}")
+            # if not os.path.isfile(value):
+            #     raise ValueError(f"Attachment must be a valid file path. File not found: {value}")
         self.__attachment = value
 
     @property
@@ -392,10 +398,16 @@ class Advertisement(Model):
         self.__platform_id = value
 
     @staticmethod
-    def __validate_date(date_str):
+    def __validate_date(date_input):
+
         try:
-            datetime.strptime(date_str, "%Y-%m-%d")
-            return True
+            if isinstance(date_input, datetime):
+                return True
+            elif isinstance(date_input, str):
+                datetime.strptime(date_input, "%Y-%m-%d")
+                return True
+            else:
+                return False
         except ValueError:
             return False
 
@@ -446,7 +458,7 @@ class MediaPlatform(Model):
 
     @platform_type.setter
     def platform_type(self, value):
-        if value not in PLATFORM_TYPES:
+        if value not in InitialData.PLATFORM_TYPES and value is not None:
             raise ValueError("There is no such platform type in the system")
         self.__platform_type = value
 
@@ -456,7 +468,7 @@ class MediaPlatform(Model):
 
     @main_ad_format.setter
     def main_ad_format(self, value):
-        if value and value not in ADVERTISEMENT_FORMATS:
+        if value and value not in InitialData.ADVERTISEMENT_FORMATS:
             raise ValueError("There is no such advertisement format in the system")
         self.__main_ad_format = value
 
@@ -603,7 +615,7 @@ class AudienceSegment(Model):
 
     @location.setter
     def location(self, value):
-        if value and value not in LOCATIONS:
+        if value and value not in InitialData.LOCATIONS:
             raise ValueError("There is no such location in the system.")
         self.__location = value
 
@@ -623,7 +635,7 @@ class AudienceSegment(Model):
 
     @socioeconomic_status.setter
     def socioeconomic_status(self, value):
-        if value and len(value) <= 3:
+        if value and len(value) <= 2:
             raise ValueError("Too short status.")
         self.__socioeconomic_status = value
 
@@ -633,7 +645,7 @@ class AudienceSegment(Model):
 
     @language.setter
     def language(self, value):
-        if value not in LANGUAGES:
+        if value not in InitialData.LANGUAGES:
             raise ValueError("There is no such language in the system.")
         self.__language = value
 
@@ -769,7 +781,7 @@ class User(Model):
 
     @country.setter
     def country(self, value):
-        if value not in LOCATIONS:
+        if value not in InitialData.LOCATIONS:
             raise ValueError("There is no such country in our system")
         self.__country = value
 
@@ -810,9 +822,15 @@ class User(Model):
         self.__segment_id = value
 
     @staticmethod
-    def __validate_date(date_str):
+    def __validate_date(date_input):
+
         try:
-            datetime.strptime(date_str, "%Y-%m-%d")
-            return True
+            if isinstance(date_input, datetime):
+                return True
+            elif isinstance(date_input, str):
+                datetime.strptime(date_input, "%Y-%m-%d")
+                return True
+            else:
+                return False
         except ValueError:
             return False
