@@ -288,10 +288,24 @@
     </property>
     <addaction name="actionCampaignAndAdvertisements"/>
    </widget>
+   <widget class="QMenu" name="menuPrint">
+    <property name="title">
+     <string>Print</string>
+    </property>
+    <addaction name="actionCampaignsPlatforms"/>
+   </widget>
+   <widget class="QMenu" name="menuLog_out">
+    <property name="title">
+     <string>Log out</string>
+    </property>
+    <addaction name="actionLogout"/>
+   </widget>
    <addaction name="menuDatabase"/>
    <addaction name="menuQuery_Editor"/>
    <addaction name="menuEdit_Form"/>
    <addaction name="menuView"/>
+   <addaction name="menuPrint"/>
+   <addaction name="menuLog_out"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionGoClients">
@@ -356,6 +370,16 @@
   <action name="actionGoUsers">
    <property name="text">
     <string>Users</string>
+   </property>
+  </action>
+  <action name="actionLogout">
+   <property name="text">
+    <string>Log out</string>
+   </property>
+  </action>
+  <action name="actionCampaignsPlatforms">
+   <property name="text">
+    <string>Campaigns on platforms</string>
    </property>
   </action>
  </widget>

@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from DatabaseController import DatabaseController
-from Windows import TablesWindow
+from Windows import TablesWindow, MainWindow
 from FetchDataController import *
 import InitialData
 DB_CONFIG = {
@@ -25,7 +25,7 @@ load_audience_segments_from_db(db_manager, InitialData.AudienceSegments)
 load_segment_platforms_from_db(db_manager, InitialData.SegmentPlatforms)
 load_campaign_segments_from_db(db_manager, InitialData.CampaignSegments)
 load_users_from_db(db_manager, InitialData.Users)
-window = TablesWindow()
+window = MainWindow()
 window.show()
 app.exec_()
 InitialData.Clients.save_to_db(db_manager)

@@ -1,8 +1,13 @@
+from datetime import datetime
 
 from PyQt5 import QtWidgets, uic
 from typing import Tuple, Optional, List, Any
 from PyQt5.QtCore import QDate, QTimer
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QFileDialog
+import xlsxwriter
+from fpdf import FPDF
+import pandas as pd
 
 import InitialData
 from Controllers import *
@@ -297,11 +302,54 @@ class AddClientWindow(QtWidgets.QDialog):
         self.__controller.set_data(client)
 
 
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("MainWindow.ui", self)
+        self.clientRadioButton.setChecked(True)
+        self.loginButton.clicked.connect(self.go_next)
+
+    def go_next(self):
+        entered_email = self.emailLineEdit.text().strip()
+        entered_password = self.passwordLineEdit.text().strip()
+        if self.clientRadioButton.isChecked():
+            appropriate_client = None
+            for client in InitialData.Clients.get_items():
+                if entered_email == client.email and entered_password == client.password:
+                    appropriate_client = client
+                    break
+            if appropriate_client:
+                window = ClientViewWindow(self, appropriate_client)
+                self.hide()
+                window.show()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Invalid data", "Email or password is incorrect")
+        elif self.userRadioButton.isChecked():
+            appropriate_user = None
+            for user in InitialData.Users.get_items():
+                if entered_email == user.email and entered_password == user.password:
+                    appropriate_user = user
+                    break
+            if appropriate_user:
+                pass
+                # window = UserViewWindow(self, user)
+                # self.hide()
+                # window.show()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Invalid data", "Email or password is incorrect")
+        else:
+            if entered_email == "admin@gmail.com" and entered_password == "ADMIN":
+                window = TablesWindow(self)
+                self.hide()
+                window.show()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Invalid data", "Email or password is incorrect")
+
 
 
 class TablesWindow(QtWidgets.QMainWindow):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, parent = None) -> None:
+        super().__init__(parent)
         uic.loadUi("TablesWindow.ui", self)
         self.__controller = TablesWindowController(self)
         self.addButton.clicked.connect(self.open_item_dialog)
@@ -321,6 +369,8 @@ class TablesWindow(QtWidgets.QMainWindow):
         self.actionAdd.triggered.connect(self.open_item_dialog)
         self.actionUpdate.triggered.connect(lambda: self.open_item_dialog(True))
         self.actionDelete.triggered.connect(self.remove_item)
+        self.actionLogout.triggered.connect(self.go_back)
+        self.actionCampaignsPlatforms.triggered.connect(self.generate_platform_campaign_report)
         self.sortButton.clicked.connect(self.open_sort_dialog)
         self.findButton.clicked.connect(self.open_find_dialog)
         self.filterButton.clicked.connect(self.open_filter_dialog)
@@ -478,6 +528,358 @@ class TablesWindow(QtWidgets.QMainWindow):
         info_window = window_class(self, selected_item, update_callback)
         self.hide()
         info_window.show()
+
+    def generate_platform_campaign_report(self):
+        platforms = InitialData.MediaPlatforms.get_items()
+        if not platforms:
+            QtWidgets.QMessageBox.warning(self, "No Platforms", "No platforms found in the system.")
+            return
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save Platform Campaign Report", "", "PDF Files (*.pdf)"
+        )
+        if not file_path:
+            return
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", style="B", size=14)
+        pdf.cell(0, 10, "Platform Campaign Report", ln=True, align="C")
+        pdf.ln(10)
+        for platform in platforms:
+            platform_campaigns = [
+                cp.campaign_id for cp in InitialData.CampaignPlatforms.get_items()
+                if cp.platform_id == platform.platform_id
+            ]
+            if not platform_campaigns:
+                continue
+            campaigns = [
+                campaign for campaign in InitialData.Campaigns.get_items()
+                if campaign.campaign_id in platform_campaigns
+            ]
+            pdf.set_font("Arial", style="B", size=12)
+            pdf.cell(0, 10, f"Platform: {platform.platform_name}", ln=True)
+            pdf.ln(5)
+            headers = ["Campaign Name", "Start Date", "End Date", "Budget"]
+            column_widths = [60, 40, 40, 40]
+            for header, width in zip(headers, column_widths):
+                pdf.cell(width, 10, header, border=1, align="C")
+            pdf.ln()
+            for campaign in campaigns:
+                pdf.cell(60, 10, campaign.campaign_name or "Unnamed Campaign", border=1)
+                pdf.cell(40, 10, campaign.start_date.strftime('%Y-%m-%d') if campaign.start_date else "N/A", border=1)
+                pdf.cell(40, 10, campaign.end_date.strftime('%Y-%m-%d') if campaign.end_date else "N/A", border=1)
+                pdf.cell(40, 10, f"${campaign.budget:.2f}" if campaign.budget else "N/A", border=1)
+                pdf.ln()
+            pdf.ln(10)
+        pdf.output(file_path)
+        QtWidgets.QMessageBox.information(self, "Success", f"Platform Campaign Report saved: {file_path}")
+
+    def go_back(self):
+        self.parent().show()
+        self.close()
+
+
+class ClientViewWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None, client: Client = None):
+        super().__init__(parent)
+        uic.loadUi("ClientViewWindow.ui", self)
+        self.client = client
+        self.display_info()
+        self.actionLogout.triggered.connect(self.go_back)
+        self.campaignsBudgetButton.clicked.connect(self.generate_budget_report)
+        self.campaignsAudienceButton.clicked.connect(self.generate_audience_report)
+        self.platformsEfficiencyButton.clicked.connect(self.generate_platform_efficiency_report)
+        self.campaignsAdvertisementsButton.clicked.connect(self.generate_advertising_messages_report)
+        self.addCampaignButton.clicked.connect(self.create_campaign_request_document)
+
+    def display_info(self):
+        self.nameLabel.setText(self.client.company_name)
+        campaigns = InitialData.Campaigns.find(company_name=self.client.company_name)
+        if campaigns:
+            headers = campaigns[0].GetData()[0]
+            updated_headers = [header for header in headers if header != "Company Name"]
+            self.campaignsTableWidget.setRowCount(len(campaigns))
+            self.campaignsTableWidget.setColumnCount(len(updated_headers))
+            self.campaignsTableWidget.setHorizontalHeaderLabels(updated_headers)
+
+            for row_ind, row_data in enumerate(campaigns):
+                campaign_data = row_data.GetData()[1]
+                adjusted_data = [value for index, value in enumerate(campaign_data) if headers[index] != "Company Name"]
+                for col_ind, col_data in enumerate(adjusted_data):
+                    item = QTableWidgetItem(str(col_data))
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    self.campaignsTableWidget.setItem(row_ind, col_ind, item)
+
+            campaign_ids = [campaign.campaign_id for campaign in campaigns]
+            used_platform_ids = {
+                cp.platform_id for cp in InitialData.CampaignPlatforms.get_items()
+                if cp.campaign_id in campaign_ids
+            }
+            used_platforms = [
+                platform for platform in InitialData.MediaPlatforms.get_items()
+                if platform.platform_id in used_platform_ids
+            ]
+            headers = used_platforms[0].GetData()[0]
+            self.platformsTableWidget.setRowCount(len(used_platforms))
+            self.platformsTableWidget.setColumnCount(len(headers))
+            self.platformsTableWidget.setHorizontalHeaderLabels(headers)
+
+            for row_ind, platform in enumerate(used_platforms):
+                platform_data = platform.GetData()[1]
+                for col_ind, col_data in enumerate(platform_data):
+                    item = QTableWidgetItem(str(col_data))
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    self.platformsTableWidget.setItem(row_ind, col_ind, item)
+
+
+
+    # def edit_client(self):
+    #     dialog = AddClientWindow(self)
+    #     current_client = self.clients[self.current_index]
+    #     if not current_client:
+    #         QtWidgets.QMessageBox.warning(self, "Error", "Could not retrieve item for editing")
+    #         return
+    #     # print(self.campaigns[self.current_index])
+    #     dialog.set_data(current_client)
+    #     if dialog.exec_() == QtWidgets.QDialog.Accepted:
+    #         updated_client = dialog.get_data()
+    #         if updated_client:
+    #             company_name = current_client.company_name
+    #             for i, client in enumerate(InitialData.Clients.get_items()):
+    #                 if client.company_name == company_name:
+    #                     InitialData.Clients.update(i, updated_client)
+    #                     break
+    #             self.update_info()
+
+    def go_back(self):
+        self.parent().show()
+        self.close()
+
+    def export_to_excel(self, file_path, report_data, headers):
+        excel_data = []
+        for report in report_data:
+            max_len = max(
+                len(report.get(key, []))
+                for key in headers[1:]
+            )
+            columns = {
+                key: (report.get(key, []) )
+                     + [""] * (max_len - len(report.get(key, [])))
+                for key in headers[1:]
+            }
+            for values in zip(*columns.values()):
+                row = {headers[0]: report.get(headers[0], "Unnamed")}
+                for col_name, value in zip(headers[1:], values):
+                    row[col_name] = value
+                excel_data.append(row)
+        df = pd.DataFrame(excel_data)
+        df.to_excel(file_path, index=False)
+        QtWidgets.QMessageBox.information(self, "Success", f"Report saved as Excel: {file_path}")
+
+    def export_to_pdf(self, file_path, report_data, headers):
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        for report in report_data:
+            pdf.set_font("Arial", style="B", size=14)
+            pdf.cell(0, 10, f"{headers[0]}: {report.get(headers[0], 'Unnamed')}", ln=True)
+            for header in headers[1:]:
+                pdf.set_font("Arial", style="B", size=12)
+                pdf.cell(0, 10, f"{header}:", ln=True)
+                pdf.set_font("Arial", size=10)
+                for item in report.get(header, []):
+                    pdf.cell(0, 10, f"  - {item}", ln=True)
+                pdf.ln(5)
+            pdf.ln(10)
+        pdf.output(file_path)
+        QtWidgets.QMessageBox.information(self, "Success", f"Report saved as PDF: {file_path}")
+
+    def generate_budget_report(self):
+        campaigns = InitialData.Campaigns.find(company_name=self.client.company_name)
+        if not campaigns:
+            QtWidgets.QMessageBox.warning(self, "No Campaigns", "No campaigns found for this client.")
+            return
+        report_data = []
+        for campaign in campaigns:
+            total_budget = campaign.budget
+            clicks = sum(
+                ad.clicks
+                for ad in InitialData.Advertisements.get_items()
+                if ad.campaign_id == campaign.campaign_id and ad.clicks is not None
+            )
+            cost_per_click = total_budget / clicks if clicks else 0
+            roi = (clicks * 3 - total_budget) / total_budget if total_budget else 0
+            report_data.append({
+                "Campaign Name": campaign.campaign_name or "Unnamed Campaign",
+                "Total Budget": [total_budget],
+                "Clicks": [clicks],
+                "Cost per Click": [round(cost_per_click, 2)],
+                "ROI (%)": [round(roi * 100, 2)]
+            })
+        headers = ["Campaign Name", "Total Budget", "Clicks", "Cost per Click", "ROI (%)"]
+        self.export_report(report_data, headers, "Budget Report")
+
+    def generate_audience_report(self):
+        campaigns = InitialData.Campaigns.find(company_name=self.client.company_name)
+        if not campaigns:
+            QtWidgets.QMessageBox.warning(self, "No Campaigns", "No campaigns found for this client.")
+            return
+        report_data = []
+        for campaign in campaigns:
+            campaign_id = campaign.campaign_id
+            campaign_platforms = [
+                cp.platform_id for cp in InitialData.CampaignPlatforms.get_items()
+                if cp.campaign_id == campaign_id
+            ]
+            audience_segments = {
+                segment for sp in InitialData.SegmentPlatforms.get_items()
+                if sp.platform_id in campaign_platforms
+                for segment in InitialData.AudienceSegments.get_items()
+                if segment.segment_id == sp.segment_id
+            }
+            report = {
+                "Campaign Name": campaign.campaign_name or "Unnamed Campaign",
+                "Demographics": list(set(f"{seg.age_range} ({seg.gender})" for seg in audience_segments)),
+
+                "Interests": list(set(seg.general_interest for seg in audience_segments)),
+                "Geographic Coverage": list(set(seg.location for seg in audience_segments)),
+            }
+            report_data.append(report)
+        headers = [
+            "Campaign Name",
+            "Demographics",
+            "Interests",
+            "Geographic Coverage",
+        ]
+        self.export_report(report_data, headers, "Audience Report")
+
+    def generate_platform_efficiency_report(self):
+        campaigns = InitialData.Campaigns.find(company_name=self.client.company_name)
+        platform_data = {}
+        for campaign in campaigns:
+            campaign_ads = [
+                ad for ad in InitialData.Advertisements.get_items()
+                if ad.campaign_id == campaign.campaign_id
+            ]
+            for ad in campaign_ads:
+                if ad.platform_id not in platform_data:
+                    platform_data[ad.platform_id] = {"Impressions": 0, "Clicks": 0}
+
+                platform_data[ad.platform_id]["Impressions"] += ad.views or 0
+                platform_data[ad.platform_id]["Clicks"] += ad.clicks or 0
+        report_data = []
+        for platform_id, metrics in platform_data.items():
+            platform = next(
+                (p for p in InitialData.MediaPlatforms.get_items() if p.platform_id == platform_id), None
+            )
+            if platform:
+                impressions = metrics["Impressions"]
+                clicks = metrics["Clicks"]
+                conversion_rate = (clicks / impressions * 100) if impressions else 0
+                report_data.append({
+                    "Platform Name": platform.platform_name,
+                    "Impressions": [impressions],
+                    "Clicks": [clicks],
+                    "Conversion Rate (%)": [round(conversion_rate, 2)],
+                })
+        headers = ["Platform Name", "Impressions", "Clicks", "Conversion Rate (%)"]
+        self.export_report(report_data, headers, "Platform Efficiency Report")
+
+    def generate_advertising_messages_report(self):
+        campaigns = InitialData.Campaigns.find(company_name=self.client.company_name)
+        if not campaigns:
+            QtWidgets.QMessageBox.warning(self, "No Campaigns", "No campaigns found for this client.")
+            return
+        report_data = []
+        for campaign in campaigns:
+            campaign_ads = [
+                ad for ad in InitialData.Advertisements.get_items()
+                if ad.campaign_id == campaign.campaign_id
+            ]
+            for ad in campaign_ads:
+                clicks = ad.clicks or 0
+                impressions = ad.views or 0
+                ctr = (clicks / impressions * 100) if impressions else 0
+
+                report_data.append({
+                    "Campaign Name": campaign.campaign_name or "Unnamed Campaign",
+                    "Advertisement Text": [ad.text or "No Text"],
+                    "Topic": [ad.topic or "No Topic"],
+                    "Format": [ad.format],
+                    "Clicks": [clicks],
+                    "Impressions": [impressions],
+                    "CTR (%)": [round(ctr, 2)],
+                })
+
+        headers = [
+            "Campaign Name",
+            "Advertisement Text",
+            "Topic",
+            "Format",
+            "Clicks",
+            "Impressions",
+            "CTR (%)",
+        ]
+        self.export_report(report_data, headers, "Advertising Messages Report")
+
+    def export_report(self, report_data, headers, report_title):
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, f"Save {report_title}", "", "Excel Files (*.xlsx);;PDF Files (*.pdf)"
+        )
+        if not file_path:
+            return
+
+        if file_path.endswith(".xlsx"):
+            self.export_to_excel(file_path, report_data, headers)
+        elif file_path.endswith(".pdf"):
+            self.export_to_pdf(file_path, report_data, headers)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Invalid File Type", "Please select a valid file type (.xlsx or .pdf).")
+
+    def create_campaign_request_document(self):
+        dialog = AddCampaignWindow(self)
+        dialog.set_client_name(self.client.company_name)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            campaign_data = dialog.get_data()
+            if not campaign_data:
+                QtWidgets.QMessageBox.warning(self, "Error", "Failed to retrieve campaign data.")
+                return
+            file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self,
+                "Save Campaign Request Document",
+                "",
+                "PDF Files (*.pdf)"
+            )
+            if not file_path:
+                return
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            pdf.set_font("Arial", style="B", size=16)
+            pdf.cell(0, 10, "Official Campaign Request", ln=True, align='C')
+            pdf.ln(10)
+            pdf.set_font("Arial", size=12)
+            pdf.cell(0, 10, f"Date: {datetime.today().strftime('%Y-%m-%d')}", ln=True)
+            pdf.ln(5)
+            pdf.cell(0, 10, f"Campaign Name: {campaign_data.campaign_name or 'Unnamed Campaign'}", ln=True)
+            pdf.cell(0, 10, f"Goal: {campaign_data.goal}", ln=True)
+            pdf.cell(0, 10, f"Budget: {campaign_data.budget if campaign_data.budget else 'N/A'}", ln=True)
+            pdf.cell(0, 10,
+                     f"Start Date: {campaign_data.start_date.strftime('%Y-%m-%d') if campaign_data.start_date else 'N/A'}",
+                     ln=True)
+            pdf.cell(0, 10,
+                     f"End Date: {campaign_data.end_date.strftime('%Y-%m-%d') if campaign_data.end_date else 'N/A'}",
+                     ln=True)
+            pdf.cell(0, 10, f"Company: {campaign_data.company_name}", ln=True)
+            pdf.ln(10)
+            pdf.cell(0, 10, "Signature: __________________________", ln=True)
+            pdf.ln(10)
+            pdf.cell(0, 10, "Approved By: _______________________", ln=True)
+            pdf.output(file_path)
+            QtWidgets.QMessageBox.information(self, "Success", f"Campaign request document saved to {file_path}.")
+
 
 class SegmentFilterWindow(QtWidgets.QDialog):
     def __init__(self, parent = None, criteria = None):
