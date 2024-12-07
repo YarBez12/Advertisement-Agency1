@@ -36,7 +36,7 @@
     <rect>
      <x>215</x>
      <y>297</y>
-     <width>261</width>
+     <width>141</width>
      <height>24</height>
     </rect>
    </property>
@@ -349,6 +349,19 @@
    </property>
    <property name="text">
     <string>Password</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="budgetButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>300</y>
+     <width>111</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>No budget</string>
    </property>
   </widget>
  </widget>

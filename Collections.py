@@ -509,47 +509,7 @@ class SegmentPlatformCollection(Collection):
             ]
             db_manager.execute_query(query, params)
 
-class CampaignSegmentCollection(Collection):
-    def add(self, item):
-        if not isinstance(item, CampaignSegment):
-            raise TypeError("Item must be an instance of CampaignSegment model.")
-        super().add(item)
 
-    def get_str_models_name(self):
-        return "CampaignSegmentCollection"
-
-    def save_to_db(self, db_manager):
-        query_select_all = "SELECT campaign_id, segment_id FROM CampaignSegments;"
-        _, db_campaign_segments = db_manager.fetch_data(query_select_all)
-        db_ids = {(row[0], row[1]) for row in db_campaign_segments}
-        current_ids = {(cs.campaign_id, cs.segment_id) for cs in self._items}
-        ids_to_delete = db_ids - current_ids
-
-        if ids_to_delete:
-            delete_query = "DELETE FROM CampaignSegments WHERE campaign_id = ? AND segment_id = ?;"
-            for campaign_id, segment_id in ids_to_delete:
-                db_manager.execute_query(delete_query, [campaign_id, segment_id])
-
-        for cs in self._items:
-            query = """
-                    MERGE INTO CampaignSegments AS target
-                    USING (SELECT ? AS campaign_id, ? AS segment_id, ? AS ad_frequency) AS source
-                    ON target.campaign_id = source.campaign_id AND target.segment_id = source.segment_id
-                    WHEN MATCHED THEN
-                        UPDATE SET ad_frequency = source.ad_frequency
-                    WHEN NOT MATCHED THEN
-                        INSERT (campaign_id, segment_id, ad_frequency)
-                        VALUES (?, ?, ?);
-                """
-            params = [
-                cs.campaign_id,
-                cs.segment_id,
-                cs.ad_frequency,
-                cs.campaign_id,
-                cs.segment_id,
-                cs.ad_frequency,
-            ]
-            db_manager.execute_query(query, params)
 
 
 class UserCollection(Collection):

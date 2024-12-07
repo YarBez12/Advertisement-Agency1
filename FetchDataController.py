@@ -130,19 +130,7 @@ def load_segment_platforms_from_db(db_manager, segment_platform_collection):
         segment_platform_collection.add(segment_platform)
 
 
-def load_campaign_segments_from_db(db_manager, campaign_segment_collection):
-    query = """
-        SELECT campaign_id, segment_id, ad_frequency
-        FROM CampaignSegments;
-    """
-    _, rows = db_manager.fetch_data(query)
-    for row in rows:
-        campaign_segment = CampaignSegment(
-            campaign_id=row[0],
-            segment_id=row[1],
-            ad_frequency=row[2]
-        )
-        campaign_segment_collection.add(campaign_segment)
+
 
 
 def load_users_from_db(db_manager, user_collection):

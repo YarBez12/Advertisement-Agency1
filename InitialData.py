@@ -116,7 +116,6 @@ MediaPlatforms = MediaPlatformCollection()
 CampaignPlatforms = CampaignPlatformCollection()
 AudienceSegments = AudienceSegmentCollection()
 SegmentPlatforms = SegmentPlatformCollection()
-CampaignSegments = CampaignSegmentCollection()
 Users = UserCollection()
 
 

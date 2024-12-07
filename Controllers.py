@@ -33,25 +33,35 @@ class AddAdvertisementWindowController:
 
     def get_data(self) -> Optional[Advertisement]:
         send_date_qdate = self.__window.sendDateEdit.date()
-        campaign_name = self.__window.campaignComboBox.currentText().strip()
-        campaign = next((c for c in InitialData.Campaigns.get_items() if c.campaign_name == campaign_name), None)
-        platform_name = self.__window.platformComboBox.currentText().strip()
-        platform = next((p for p in InitialData.MediaPlatforms.get_items() if p.platform_name == platform_name), None)
+        campaign_name = self.__window.campaignComboBox.currentText().strip() if self.__window.campaignComboBox.isEnabled() else None
+        if campaign_name is not None:
+            campaign = next((c for c in InitialData.Campaigns.get_items() if c.campaign_name == campaign_name), None)
+            campaign_id = campaign.campaign_id
+        else:
+            campaign_id = None
+        platform_name = self.__window.platformComboBox.currentText().strip() if self.__window.platformComboBox.isEnabled() else None
+        if platform_name:
+            platform = next((p for p in InitialData.MediaPlatforms.get_items() if p.platform_name == platform_name), None)
+            platform_id = platform.platform_id
+        else:
+            platform_id = None
+        text = self.__window.textLineEdit.text().strip()
+        attachment = self.__window.attachmentLineEdit.text().strip()
         return Advertisement(
             advertisement_id=int(self.__window.idLineEdit.text().strip()),
-            text=self.__window.textLineEdit.text().strip(),
+            text=text if text else None,
             format=self.__window.formatComboBox.currentText(),
             send_time=datetime.combine(send_date_qdate.toPyDate(),
                                         datetime.min.time()) if self.__window.sendDateEdit.isEnabled() else None,
             topic=self.__window.topicLineEdit.text().strip(),
-            language=self.__window.languageComboBox.currentText(),
-            attachment=self.__window.attachmentLineEdit.text().strip(),
+            language=self.__window.languageComboBox.currentText() if self.__window.languageComboBox.isEnabled() else None,
+            attachment=attachment if attachment else None,
             clicks=int(
                 self.__window.clicksLineEdit.text().strip()) if self.__window.clicksLineEdit.text().strip() else None,
             views=int(
                 self.__window.viewsLineEdit.text().strip()) if self.__window.viewsLineEdit.text().strip() else None,
-            campaign_id=campaign.campaign_id,
-            platform_id=platform.platform_id
+            campaign_id=campaign_id,
+            platform_id=platform_id
         )
 
     def reset_data(self):
@@ -68,34 +78,56 @@ class AddAdvertisementWindowController:
         self.__window.viewsLineEdit.clear()
         self.__window.campaignComboBox.setCurrentIndex(0)
         self.__window.platformComboBox.setCurrentIndex(0)
+        self.__window.sendDateEdit.setEnabled(False)
+        self.__window.dateButton.setText("Add date")
+        self.__window.languageComboBox.setEnabled(False)
+        self.__window.languageButton.setText("Add language")
+        self.__window.campaignComboBox.setEnabled(False)
+        self.__window.campaignButton.setText("Add campaign")
+        self.__window.platformComboBox.setEnabled(False)
+        self.__window.platformButton.setText("Add platform")
 
     def set_data(self, advertisement: Advertisement) -> None:
         self.__window.idLineEdit.setText(str(advertisement.advertisement_id))
         self.__window.textLineEdit.setText(advertisement.text or "")
         self.__window.formatComboBox.setCurrentText(advertisement.format or "")
-        if advertisement.send_time:
+        if advertisement.send_time is not None:
             self.__window.sendDateEdit.setDate(advertisement.send_time)
             self.__window.sendDateEdit.setEnabled(True)
-            self.__window.sendDateEdit.setStyleSheet("")
+            self.__window.dateButton.setText("Remove date")
         else:
             self.__window.sendDateEdit.setEnabled(False)
-            self.__window.sendDateEdit.setStyleSheet("background-color: lightgray;")
+            self.__window.dateButton.setText("Add date")
         self.__window.topicLineEdit.setText(advertisement.topic or "")
-        self.__window.languageComboBox.setCurrentText(advertisement.language or "")
+        if advertisement.language is not None:
+            self.__window.languageComboBox.setCurrentText(advertisement.language)
+            self.__window.languageComboBox.setEnabled(True)
+            self.__window.languageButton.setText("Remove language")
+        else:
+            self.__window.languageComboBox.setEnabled(False)
+            self.__window.languageButton.setText("Add language")
         self.__window.attachmentLineEdit.setText(advertisement.attachment or "")
         self.__window.clicksLineEdit.setText(str(advertisement.clicks) if advertisement.clicks is not None else "")
         self.__window.viewsLineEdit.setText(str(advertisement.views) if advertisement.views is not None else "")
         campaign = next((c for c in InitialData.Campaigns.get_items() if c.campaign_id == advertisement.campaign_id), None)
-        if campaign:
+        if campaign is not None:
             self.__window.campaignComboBox.setCurrentText(campaign.campaign_name)
+            self.__window.campaignComboBox.setEnabled(True)
+            self.__window.campaignButton.setText("Remove campaign")
         else:
             self.__window.campaignComboBox.setCurrentText("")
+            self.__window.campaignComboBox.setEnabled(False)
+            self.__window.campaignButton.setText("Add campaign")
         platform = next((p for p in InitialData.MediaPlatforms.get_items() if p.platform_id == advertisement.platform_id),
                         None)
         if platform:
             self.__window.platformComboBox.setCurrentText(platform.platform_name)
+            self.__window.platformComboBox.setEnabled(True)
+            self.__window.platformButton.setText("Remove platform")
         else:
             self.__window.platformComboBox.setCurrentText("")
+            self.__window.platformComboBox.setEnabled(False)
+            self.__window.platformButton.setText("Add platform")
 
     def set_campaign_name(self, campaign_name):
         self.__window.campaignComboBox.setCurrentText(str(campaign_name))
@@ -128,10 +160,10 @@ class AddCampaignWindowController:
     def get_data(self) -> Optional[Campaign]:
         start_date_qdate = self.__window.startDateEdit.date()
         end_date_qdate = self.__window.endDateEdit.date()
-
+        campaign_name = self.__window.nameLineEdit.text().strip()
         return Campaign(
             campaign_id=int(self.__window.idLineEdit.text().strip()),
-            campaign_name=self.__window.nameLineEdit.text().strip(),
+            campaign_name=campaign_name if campaign_name else None,
             start_date=datetime.combine(start_date_qdate.toPyDate(), datetime.min.time()) if self.__window.startDateEdit.isEnabled() else None,
             end_date=datetime.combine(end_date_qdate.toPyDate(), datetime.min.time()) if self.__window.endDateEdit.isEnabled() else None,
             goal=self.__window.goalLineEdit.text().strip(),
@@ -160,26 +192,20 @@ class AddCampaignWindowController:
         if campaign.start_date:
             self.__window.startDateEdit.setDate(campaign.start_date)
             self.__window.startDateEdit.setEnabled(True)
-            self.__window.startDateEdit.setStyleSheet("")
         else:
             self.__window.startDateEdit.setEnabled(False)
-            self.__window.startDateEdit.setStyleSheet("background-color: lightgray;")
 
         if campaign.end_date:
             self.__window.endDateEdit.setDate(campaign.end_date)
             self.__window.endDateEdit.setEnabled(True)
-            self.__window.endDateEdit.setStyleSheet("")
         else:
             self.__window.endDateEdit.setEnabled(False)
-            self.__window.endDateEdit.setStyleSheet("background-color: lightgray;")
 
         if campaign.budget is not None:
             self.__window.budgetSpinBox.setValue(campaign.budget)
             self.__window.budgetSpinBox.setEnabled(True)
-            self.__window.budgetSpinBox.setStyleSheet("")
         else:
             self.__window.budgetSpinBox.setEnabled(False)
-            self.__window.budgetSpinBox.setStyleSheet("background-color: lightgray;")
 
         self.__window.goalLineEdit.setText(campaign.goal or "")
         self.__window.companyComboBox.setCurrentText(campaign.company_name or "")
@@ -201,16 +227,16 @@ class AddClientWindowController:
         return True
 
     def get_data(self) -> Optional[Client]:
-
+        address = self.__window.addressLineEdit.text().strip()
         return Client(
             company_name=self.__window.nameLineEdit.text().strip(),
             phone=self.__window.phoneLineEdit.text().strip(),
             email=self.__window.emailLineEdit.text().strip(),
             password=self.__window.passwordLineEdit.text().strip(),
-            address=self.__window.addressLineEdit.text().strip(),
+            address=address if address else None,
             type=self.__window.typeComboBox.currentText(),
             business_area=self.__window.areaComboBox.currentText(),
-            available_budget=self.__window.budgetSpinBox.value()
+            available_budget=self.__window.budgetSpinBox.value() if self.__window.budgetSpinBox.isEnabled() else None
         )
 
     def reset_data(self) -> None:
@@ -222,6 +248,8 @@ class AddClientWindowController:
         self.__window.typeComboBox.setCurrentIndex(0)
         self.__window.areaComboBox.setCurrentIndex(0)
         self.__window.budgetSpinBox.setValue(0)
+        self.__window.budgetSpinBox.setEnabled(False)
+        self.__window.budgetButton.setText("Add budget")
 
     def set_data(self, client) -> None:
         self.__window.nameLineEdit.setText(client.company_name or "")
@@ -231,7 +259,14 @@ class AddClientWindowController:
         self.__window.addressLineEdit.setText(client.address or "")
         self.__window.typeComboBox.setCurrentText(client.type or "")
         self.__window.areaComboBox.setCurrentText(client.business_area or "")
-        self.__window.budgetSpinBox.setValue(client.available_budget or 0)
+        if client.available_budget is not None:
+            self.__window.budgetSpinBox.setValue(client.available_budget)
+            self.__window.budgetSpinBox.setEnabled(True)
+            self.__window.budgetButton.setText("Remove budget")
+        else:
+            self.__window.budgetSpinBox.setEnabled(False)
+            self.__window.budgetButton.setText("Add budget")
+
 
 
 class TablesWindowController:
@@ -315,7 +350,7 @@ class TablesWindowController:
         self.__window.dataTableWidget.setHorizontalHeaderLabels(updated_headers)
         for row_ind, row_data in enumerate(data.get_items()):
             for col_ind, col_data in enumerate(row_data.GetData()[1]):
-                if col_data:
+                if col_data is not None:
                     header_name = headers[col_ind]
                     if header_name in related_data_map and col_data in related_data_map[header_name]["map"] and col_ind != 0:
                         display_value = related_data_map[header_name]["map"][col_data]
@@ -334,6 +369,7 @@ class TablesWindowController:
         self.__window.databaseNameLabel.setText(data.get_str_models_name())
 
     def fill_table_with_edited_data(self):
+        self.display_data = self.current_data
         if self.find_criteria:
             found_collection = self.current_data.find_contains(
                 *(self.find_contains_functions[self.current_data.get_str_models_name()]()))
@@ -388,8 +424,6 @@ class TablesWindowController:
         return self.display_data.get_items()[selected_row]
 
     def save_item(self, data: Any, edit: bool, selected_row: Optional[int] = None) -> None:
-
-
         if edit and selected_row is not None:
             key_value = self.__window.dataTableWidget.item(selected_row, 0).text()
             current_index = next(
@@ -402,7 +436,7 @@ class TablesWindowController:
             self.display_data.update(selected_row, data)
         else:
             self.current_data.add(data)
-            self.display_data.add(data)
+            # self.display_data.add(data)
         # if self.find_criteria:
         #     self.display_data = self.current_data.find_contains(self.find_criteria["Name"],
         #                                                         self.find_criteria["Goal"])
@@ -462,9 +496,9 @@ class AddPlatformWindowController:
         return MediaPlatform(
             platform_id=int(self.__window.idLineEdit.text().strip()),
             platform_name=self.__window.nameLineEdit.text().strip(),
-            platform_type=self.__window.typeComboBox.currentText().strip(),
-            main_ad_format=self.__window.formatComboBox.currentText().strip(),
-            audience_size=int(self.__window.audienceSpinBox.value()) if self.__window.audienceSpinBox.value() else None
+            platform_type=self.__window.typeComboBox.currentText().strip() if self.__window.typeComboBox.isEnabled() else None,
+            main_ad_format=self.__window.formatComboBox.currentText().strip() if self.__window.formatComboBox.isEnabled() else None,
+            audience_size=int(self.__window.audienceSpinBox.value()) if self.__window.audienceSpinBox.isEnabled() else None
         )
 
     def reset_data(self):
@@ -474,10 +508,40 @@ class AddPlatformWindowController:
         self.__window.typeComboBox.setCurrentIndex(0)
         self.__window.formatComboBox.setCurrentIndex(0)
         self.__window.audienceSpinBox.setValue(0)
+        self.__window.budgetAllocationSpinBox.setEnabled(False)
+        self.__window.budgetAllocationButton.setText("Add budget")
+        self.__window.audienceSpinBox.setEnabled(True)
+        self.__window.sizeButton.setText("Add size")
+        self.__window.typeComboBox.setEnabled(True)
+        self.__window.typeButton.setText("Add type")
+        self.__window.formatComboBox.setEnabled(True)
+        self.__window.formatButton.setText("Add format")
+
 
     def set_data(self, platform: MediaPlatform) -> None:
         self.__window.idLineEdit.setText(str(platform.platform_id))
         self.__window.nameLineEdit.setText(platform.platform_name or "")
+        if platform.platform_type is not None:
+            self.__window.typeComboBox.setCurrentText(platform.platform_type)
+            self.__window.typeComboBox.setEnabled(True)
+            self.__window.typeButton.setText("Remove type")
+        else:
+            self.__window.typeComboBox.setEnabled(False)
+            self.__window.typeButton.setText("Add type")
+        if platform.main_ad_format is not None:
+            self.__window.formatComboBox.setCurrentText(platform.main_ad_format)
+            self.__window.formatComboBox.setEnabled(True)
+            self.__window.formatButton.setText("Remove format")
+        else:
+            self.__window.formatComboBox.setEnabled(False)
+            self.__window.formatButton.setText("Add format")
+        if platform.audience_size is not None:
+            self.__window.audienceSpinBox.setValue(platform.audience_size)
+            self.__window.audienceSpinBox.setEnabled(True)
+            self.__window.sizeButton.setText("Remove size")
+        else:
+            self.__window.audienceSpinBox.setEnabled(False)
+            self.__window.sizeButton.setText("Add size")
         self.__window.typeComboBox.setCurrentText(platform.platform_type or "")
         self.__window.formatComboBox.setCurrentText(platform.main_ad_format or "")
         self.__window.audienceSpinBox.setValue(platform.audience_size if platform.audience_size is not None else 0)
@@ -507,18 +571,21 @@ class AddSegmentWindowController:
             return -1
 
     def get_data(self):
-
+        segment_name = self.__window.nameLineEdit.text().strip()
+        general_interest = self.__window.interestLineEdit.text().strip()
+        socioeconomic_status = self.__window.statusLineEdit.text().strip()
+        behavioral_characteristics = self.__window.characteristicsLineEdit.text().strip()
         return AudienceSegment(
             segment_id=int(self.__window.idLineEdit.text().strip()),
-            segment_name=self.__window.nameLineEdit.text().strip() if self.__window.nameLineEdit.text().strip() else None,
+            segment_name=segment_name if segment_name else None,
             age_range=f"{self.__window.minimumSpinBox.value()}-{self.__window.maximumSpinBox.value()}",
             gender=self.__window.genderComboBox.currentText().strip(),
-            location=self.__window.locationComboBox.currentText().strip() if self.__window.locationComboBox.currentIndex() != 0 else None,
-            general_interest=self.__window.interestLineEdit.text().strip() if self.__window.interestLineEdit.text().strip() else None,
-            socioeconomic_status=self.__window.statusLineEdit.text().strip() if self.__window.statusLineEdit.text().strip() else None,
+            location=self.__window.locationComboBox.currentText().strip() if self.__window.locationComboBox.isEnabled() else None,
+            general_interest=general_interest if general_interest else None,
+            socioeconomic_status=socioeconomic_status if socioeconomic_status else None,
             language=self.__window.languageComboBox.currentText().strip(),
-            behavioral_characteristics=self.__window.characteristicsLineEdit.text().strip() if self.__window.characteristicsLineEdit.text().strip() else None,
-            device_used=self.__window.deviceComboBox.currentText().strip() if self.__window.deviceComboBox.currentIndex() != 0 else None,
+            behavioral_characteristics=behavioral_characteristics if behavioral_characteristics else None,
+            device_used=self.__window.deviceComboBox.currentText().strip() if self.__window.deviceComboBox.isEnabled() else None,
         )
 
     def reset_data(self):
@@ -534,6 +601,10 @@ class AddSegmentWindowController:
         self.__window.interestLineEdit.clear()
         self.__window.statusLineEdit.clear()
         self.__window.characteristicsLineEdit.clear()
+        self.__window.locationComboBox.setEnabled(False)
+        self.__window.locationButton.setText("Add location")
+        self.__window.deviceComboBox.setEnabled(False)
+        self.__window.deviceButton.setText("Add device")
 
     def set_data(self, segment: AudienceSegment) -> None:
         self.__window.idLineEdit.setText(str(segment.segment_id))
@@ -541,9 +612,21 @@ class AddSegmentWindowController:
         self.__window.minimumSpinBox.setValue(int(segment.age_range[:2]))
         self.__window.maximumSpinBox.setValue(int(segment.age_range[3:]))
         self.__window.genderComboBox.setCurrentText(segment.gender or "")
-        self.__window.locationComboBox.setCurrentText(segment.location or "")
+        if segment.location is not None:
+            self.__window.locationComboBox.setCurrentText(segment.location)
+            self.__window.locationComboBox.setEnabled(True)
+            self.__window.locationButton.setText("Remove location")
+        else:
+            self.__window.locationComboBox.setEnabled(False)
+            self.__window.locationButton.setText("Add location")
         self.__window.languageComboBox.setCurrentText(segment.language or "")
-        self.__window.deviceComboBox.setCurrentText(segment.device_used or "")
+        if segment.location is not None:
+            self.__window.deviceComboBox.setCurrentText(segment.device_used)
+            self.__window.deviceComboBox.setEnabled(True)
+            self.__window.deviceButton.setText("Remove device")
+        else:
+            self.__window.deviceComboBox.setEnabled(False)
+            self.__window.deviceButton.setText("Add device")
         self.__window.interestLineEdit.setText(segment.general_interest or "")
         self.__window.statusLineEdit.setText(segment.socioeconomic_status or "")
         self.__window.characteristicsLineEdit.setText(segment.behavioral_characteristics or "")
@@ -564,8 +647,12 @@ class AddUserWindowController:
         return True
 
     def get_data(self) -> Optional[User]:
-        segment_name = self.__window.segmentComboBox.currentText().strip()
-        segment = next((s for s in InitialData.AudienceSegments.get_items() if s.segment_name == segment_name), None)
+        segment_name = self.__window.segmentComboBox.currentText().strip() if self.__window.segmentComboBox.isEnabled() else None
+        if segment_name is not None:
+            segment = next((s for s in InitialData.AudienceSegments.get_items() if s.segment_name == segment_name), None)
+            segment_id = segment.segment_id
+        else:
+            segment_id = None
         return User(
             email=self.__window.emailLineEdit.text().strip(),
             password=self.__window.passwordLineEdit.text().strip(),
@@ -573,8 +660,8 @@ class AddUserWindowController:
             gender=self.__window.genderComboBox.currentText().strip(),
             country=self.__window.countryComboBox.currentText().strip(),
             account_creation_date=self.__window.createdDateEdit.date().toString("yyyy-MM-dd"),
-            last_purchase_date=self.__window.lastPurchaseDateEdit.date().toString("yyyy-MM-dd") if self.__window.lastPurchaseDateEdit.text().strip() else None,
-            segment_id=segment.segment_id if segment else None,
+            last_purchase_date=self.__window.lastPurchaseDateEdit.date().toString("yyyy-MM-dd") if self.__window.lastPurchaseDateEdit.isEnabled() else None,
+            segment_id=segment_id,
         )
 
     def reset_data(self):
@@ -586,6 +673,10 @@ class AddUserWindowController:
         self.__window.createdDateEdit.setDate(QDate.currentDate())
         self.__window.lastPurchaseDateEdit.clear()
         self.__window.segmentComboBox.setCurrentIndex(0)
+        self.__window.lastPurchaseDateEdit.setEnabled(False)
+        self.__window.dateButton.setText("Add date")
+        self.__window.segmentComboBox.setEnabled(False)
+        self.__window.segmentButton.setText("Add segment")
 
     def set_data(self, user: User) -> None:
         self.__window.emailLineEdit.setText(user.email or "")
@@ -596,17 +687,25 @@ class AddUserWindowController:
         if user.account_creation_date:
             account_creation_date_str = user.account_creation_date.strftime("%Y-%m-%d")
             self.__window.createdDateEdit.setDate(QDate.fromString(account_creation_date_str, "yyyy-MM-dd"))
-        if user.last_purchase_date:
+        if user.last_purchase_date is not None:
             last_purchase_date_str = user.last_purchase_date.strftime("%Y-%m-%d")
             self.__window.lastPurchaseDateEdit.setDate(QDate.fromString(last_purchase_date_str, "yyyy-MM-dd"))
+            self.__window.lastPurchaseDateEdit.setEnabled(True)
+            self.__window.dateButton.setText("Remove date")
         else:
+            self.__window.lastPurchaseDateEdit.setEnabled(False)
+            self.__window.dateButton.setText("Add budget")
             self.__window.lastPurchaseDateEdit.clear()
 
         segment = next((s for s in InitialData.AudienceSegments.get_items() if s.segment_id == user.segment_id), None)
-        if segment:
+        if segment is not None:
             self.__window.segmentComboBox.setCurrentText(segment.segment_name)
+            self.__window.segmentComboBox.setEnabled(True)
+            self.__window.segmentButton.setText("Remove segment")
         else:
             self.__window.segmentComboBox.setCurrentIndex(0)
+            self.__window.segmentComboBox.setEnabled(False)
+            self.__window.segmentButton.setText("Add segment")
 
     def set_segment_name(self, segment_name):
         self.__window.segmentComboBox.setCurrentText(str(segment_name))

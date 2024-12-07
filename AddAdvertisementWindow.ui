@@ -174,7 +174,7 @@
     <rect>
      <x>219</x>
      <y>142</y>
-     <width>271</width>
+     <width>141</width>
      <height>24</height>
     </rect>
    </property>
@@ -302,7 +302,7 @@
     <rect>
      <x>219</x>
      <y>220</y>
-     <width>261</width>
+     <width>141</width>
      <height>26</height>
     </rect>
    </property>
@@ -409,7 +409,7 @@
     <rect>
      <x>219</x>
      <y>360</y>
-     <width>261</width>
+     <width>141</width>
      <height>26</height>
     </rect>
    </property>
@@ -419,7 +419,7 @@
     <rect>
      <x>219</x>
      <y>400</y>
-     <width>261</width>
+     <width>141</width>
      <height>26</height>
     </rect>
    </property>
@@ -440,6 +440,58 @@
    </property>
    <property name="text">
     <string>Media platform</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="campaignButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>360</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>No campaign</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="platformButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>400</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>No platform</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="languageButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>220</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>No language</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="dateButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>140</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>No time</string>
    </property>
   </widget>
  </widget>

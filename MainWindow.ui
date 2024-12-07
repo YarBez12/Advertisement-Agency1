@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>contact@techcorp.com</string>
+     <string>admin@gmail.com</string>
     </property>
    </widget>
    <widget class="QLabel" name="label">
@@ -73,7 +73,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>password123</string>
+     <string>ADMIN</string>
     </property>
    </widget>
    <widget class="QPushButton" name="loginButton">

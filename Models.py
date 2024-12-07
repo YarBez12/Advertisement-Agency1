@@ -20,6 +20,15 @@ class Client(Model):
         self.__type = type
         self.__business_area = business_area
         self.__available_budget = available_budget
+        self.company_name = company_name
+        self.phone = phone
+        self.email = email
+        self.password = password
+        self.type = type
+        self.business_area = business_area
+        self.address = address
+        self.available_budget = available_budget
+
 
     def __str__(self):
         return f"Client({self.__company_name}, {self.__type}, {self.__business_area})"
@@ -121,13 +130,13 @@ class Client(Model):
 
 class Campaign(Model):
     def __init__(self, campaign_id, campaign_name, goal, company_name, start_date=None, end_date=None, budget=None):
-        self.__campaign_id = campaign_id
-        self.__campaign_name = campaign_name
-        self.__start_date = start_date
-        self.__end_date = end_date
-        self.__goal = goal
-        self.__budget = budget
-        self.__company_name = company_name
+        self.campaign_id = campaign_id
+        self.campaign_name = campaign_name
+        self.start_date = start_date
+        self.end_date = end_date
+        self.goal = goal
+        self.budget = budget
+        self.company_name = company_name
 
     def __str__(self):
         return f"Campaign({self.__campaign_name or 'Unnamed'}, Goal: {self.__goal}, Company: {self.__company_name})"
@@ -229,17 +238,17 @@ class Campaign(Model):
 class Advertisement(Model):
     def __init__(self, advertisement_id, format, topic, text=None, send_time=None, language=None,
                  attachment=None, clicks=None, views=None, campaign_id=None, platform_id=None):
-        self.__advertisement_id = advertisement_id
-        self.__text = text
-        self.__format = format
-        self.__send_time = send_time
-        self.__topic = topic
-        self.__language = language
-        self.__attachment = attachment
-        self.__clicks = clicks
-        self.__views = views
-        self.__campaign_id = campaign_id
-        self.__platform_id = platform_id
+        self.advertisement_id = advertisement_id
+        self.text = text
+        self.format = format
+        self.send_time = send_time
+        self.topic = topic
+        self.language = language
+        self.attachment = attachment
+        self.clicks = clicks
+        self.views = views
+        self.campaign_id = campaign_id
+        self.platform_id = platform_id
 
     def __str__(self):
         return f"Advertisement({self.__topic or 'No Topic'}, Format: {self.__format}, Language: {self.__language})"
@@ -394,11 +403,11 @@ class Advertisement(Model):
 
 class MediaPlatform(Model):
     def __init__(self, platform_id, platform_name, platform_type=None, main_ad_format=None, audience_size=None):
-        self.__platform_id = platform_id
-        self.__platform_name = platform_name
-        self.__platform_type = platform_type
-        self.__main_ad_format = main_ad_format
-        self.__audience_size = audience_size
+        self.platform_id = platform_id
+        self.platform_name = platform_name
+        self.platform_type = platform_type
+        self.main_ad_format = main_ad_format
+        self.audience_size = audience_size
 
     def __str__(self):
         return f"MediaPlatform({self.__platform_name}, Type: {self.__platform_type})"
@@ -468,9 +477,9 @@ class MediaPlatform(Model):
 
 class CampaignPlatform(Model):
     def __init__(self, campaign_id, platform_id, budget_allocation=None):
-        self.__campaign_id = campaign_id
-        self.__platform_id = platform_id
-        self.__budget_allocation = budget_allocation
+        self.campaign_id = campaign_id
+        self.platform_id = platform_id
+        self.budget_allocation = budget_allocation
 
     def __str__(self):
         return f"CampaignPlatform(Campaign ID: {self.__campaign_id}, Platform ID: {self.__platform_id})"
@@ -523,16 +532,16 @@ class CampaignPlatform(Model):
 class AudienceSegment(Model):
     def __init__(self, segment_id, age_range, gender, language, segment_name=None, location=None, general_interest=None,
                  socioeconomic_status=None, behavioral_characteristics=None, device_used=None):
-        self.__segment_id = segment_id
-        self.__segment_name = segment_name
-        self.__age_range = age_range
-        self.__gender = gender
-        self.__location = location
-        self.__general_interest = general_interest
-        self.__socioeconomic_status = socioeconomic_status
-        self.__language = language
-        self.__behavioral_characteristics = behavioral_characteristics
-        self.__device_used = device_used
+        self.segment_id = segment_id
+        self.segment_name = segment_name
+        self.age_range = age_range
+        self.gender = gender
+        self.location = location
+        self.general_interest = general_interest
+        self.socioeconomic_status = socioeconomic_status
+        self.language = language
+        self.behavioral_characteristics = behavioral_characteristics
+        self.device_used = device_used
 
     def __str__(self):
         return f"AudienceSegment({self.__segment_name or 'Unnamed'}, Age Range: {self.__age_range}, Gender: {self.__gender})"
@@ -653,8 +662,8 @@ class AudienceSegment(Model):
 
 class SegmentPlatform(Model):
     def __init__(self, segment_id, platform_id):
-        self.__segment_id = segment_id
-        self.__platform_id = platform_id
+        self.segment_id = segment_id
+        self.platform_id = platform_id
 
     def __str__(self):
         return f"SegmentPlatform(Segment ID: {self.__segment_id}, Platform ID: {self.__platform_id})"
@@ -689,69 +698,17 @@ class SegmentPlatform(Model):
         self.__platform_id = value
 
 
-class CampaignSegment(Model):
-    def __init__(self, campaign_id, segment_id, ad_frequency=None):
-        self.__campaign_id = campaign_id
-        self.__segment_id = segment_id
-        self.__ad_frequency = ad_frequency
-
-    def __str__(self):
-        return f"CampaignSegment(Campaign ID: {self.__campaign_id}, Segment ID: {self.__segment_id})"
-
-    def GetData(self):
-        headers = ["Campaign ID", "Segment ID", "Ad Frequency"]
-        data = [self.__campaign_id, self.__segment_id, self.__ad_frequency]
-        return headers, data
-
-    @property
-    def campaign_id(self):
-        return self.__campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, value):
-        if not isinstance(value, int):
-            raise TypeError("Campaign ID must be an integer number.")
-        if value <= 0:
-            raise ValueError("Campaign ID must be a positive integer.")
-        self.__campaign_id = value
-
-    @property
-    def segment_id(self):
-        return self.__segment_id
-
-    @segment_id.setter
-    def segment_id(self, value):
-        if not isinstance(value, int):
-            raise TypeError("Segment ID must be an integer number.")
-        if value <= 0:
-            raise ValueError("Segment ID must be a positive integer.")
-        self.__segment_id = value
-
-    @property
-    def ad_frequency(self):
-        return self.__ad_frequency
-
-    @ad_frequency.setter
-    def ad_frequency(self, value):
-        if value is not None:
-            if not isinstance(value, int):
-                raise TypeError("Ad Frequency must be an integer number.")
-            if value <= 0:
-                raise ValueError("Ad Frequency must be a positive integer.")
-        self.__ad_frequency = value
-
-
 class User(Model):
     def __init__(self, email, password, age, gender, country, account_creation_date,
                  last_purchase_date=None, segment_id=None):
-        self.__email = email
-        self.__password = password
-        self.__age = age
-        self.__gender = gender
-        self.__country = country
-        self.__account_creation_date = account_creation_date
-        self.__last_purchase_date = last_purchase_date
-        self.__segment_id = segment_id
+        self.email = email
+        self.password = password
+        self.age = age
+        self.gender = gender
+        self.country = country
+        self.account_creation_date = account_creation_date
+        self.last_purchase_date = last_purchase_date
+        self.segment_id = segment_id
 
     def __str__(self):
         return f"User(Email: {self.__email}, Age: {self.__age}, Gender: {self.__gender})"
