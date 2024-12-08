@@ -42,3 +42,5 @@ class DatabaseController:
         except pyodbc.Error as e:
             raise DatabaseQueryError(f"Error during executing query: {e}")
 
+
+
