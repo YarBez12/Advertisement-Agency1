@@ -80,66 +80,14 @@ class UserViewWindow(QtWidgets.QMainWindow):
         dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
         dialog.exec_()
 
-
-class AddAdvertisementWindow(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+class AddWindow(QtWidgets.QDialog):
+    def __init__(self,  ui_file, controller_class, parent=None):
         super().__init__(parent)
-        uic.loadUi("AddAdvertisementWindow.ui", self)
-        self.sendDateEdit.setCalendarPopup(True)
-        self.formatComboBox.addItems(InitialData.ADVERTISEMENT_FORMATS)
-        self.languageComboBox.addItems(InitialData.LANGUAGES)
-        self.addAtachmentButton.clicked.connect(self.choose_file)
+        uic.loadUi(ui_file, self)
+        self.__controller = controller_class(self)
         self.saveButton.clicked.connect(self.save)
         self.cancelButton.clicked.connect(self.reject)
-        self.__controller = AddAdvertisementWindowController(self)
-        self.reset_data()
-        self.dateButton.clicked.connect(self.toggle_time)
-        self.languageButton.clicked.connect(self.toggle_language)
-        self.campaignButton.clicked.connect(self.toggle_campaign)
-        self.platformButton.clicked.connect(self.toggle_platform)
         self.resetButton.clicked.connect(self.reset_data)
-        self.campaignComboBox.addItems([campaign.campaign_name for campaign in InitialData.Campaigns.get_items() if campaign.campaign_name])
-        self.platformComboBox.addItems([platform.platform_name for platform in InitialData.MediaPlatforms.get_items()])
-        self.reset_data()
-
-    def toggle_time(self) -> None:
-        if self.sendDateEdit.isEnabled():
-            self.sendDateEdit.setEnabled(False)
-            self.dateButton.setText("Add time")
-        else:
-            self.sendDateEdit.setEnabled(True)
-            self.dateButton.setText("Remove time")
-
-    def toggle_language(self) -> None:
-        if self.languageComboBox.isEnabled():
-            self.languageComboBox.setEnabled(False)
-            self.languageButton.setText("Add language")
-        else:
-            self.languageComboBox.setEnabled(True)
-            self.languageButton.setText("Remove language")
-
-    def toggle_campaign(self) -> None:
-        if self.languageComboBox.isEnabled():
-            self.campaignComboBox.setEnabled(False)
-            self.campaignButton.setText("Add campaign")
-        else:
-            self.campaignComboBox.setEnabled(True)
-            self.campaignButton.setText("Remove campaign")
-
-    def toggle_platform(self) -> None:
-        if self.platformComboBox.isEnabled():
-            self.platformComboBox.setEnabled(False)
-            self.platformButton.setText("Add platform")
-        else:
-            self.platformComboBox.setEnabled(True)
-            self.platformButton.setText("Remove platform")
-
-
-    def choose_file(self) -> None:
-        options = QtWidgets.QFileDialog.DontUseNativeDialog
-        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose your file", "", "All Files (*.*)",
-                                                             options=options)
-        self.__controller.update_attachment_line_edit(file_path)
 
     def save(self) -> None:
         validation = self.__controller.validate_window()
@@ -152,14 +100,35 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
         else:
             self.accept()
 
-    def get_data(self) -> Optional[Advertisement]:
-        return self.__controller.get_data()
-
-    def set_data(self, advertisement: Advertisement) -> None:
-        self.__controller.set_data(advertisement)
-
     def reset_data(self):
         self.__controller.reset_data()
+
+    def get_data(self):
+        return self.__controller.get_data()
+
+    def set_data(self, data):
+        self.__controller.set_data(data)
+
+class AddAdvertisementWindow(AddWindow):
+    def __init__(self, parent=None):
+        super().__init__("AddAdvertisementWindow.ui", AddAdvertisementWindowController, parent)
+        self.sendDateEdit.setCalendarPopup(True)
+        self.formatComboBox.addItems(InitialData.ADVERTISEMENT_FORMATS)
+        self.languageComboBox.addItems(InitialData.LANGUAGES)
+        self.addAtachmentButton.clicked.connect(self.choose_file)
+        self.dateButton.clicked.connect(self.__controller.toggle_time)
+        self.languageButton.clicked.connect(self.__controller.toggle_language)
+        self.campaignButton.clicked.connect(self.__controller.toggle_campaign)
+        self.platformButton.clicked.connect(self.__controller.toggle_platform)
+        self.campaignComboBox.addItems([campaign.campaign_name for campaign in InitialData.Campaigns.get_items() if campaign.campaign_name])
+        self.platformComboBox.addItems([platform.platform_name for platform in InitialData.MediaPlatforms.get_items()])
+        self.reset_data()
+
+    def choose_file(self) -> None:
+        options = QtWidgets.QFileDialog.DontUseNativeDialog
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose your file", "", "All Files (*.*)",
+                                                             options=options)
+        self.__controller.update_attachment_line_edit(file_path)
 
     def set_campaign_name(self, campaign_name: int):
         self.__controller.set_campaign_name(campaign_name)
@@ -167,78 +136,23 @@ class AddAdvertisementWindow(QtWidgets.QDialog):
     def set_platform_name(self, platform_name: int):
         self.__controller.set_platform_name(platform_name)
 
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
 
-class AddPlatformWindow(QtWidgets.QDialog):
+
+class AddPlatformWindow(AddWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("AddPlatformWindow.ui", self)
+        super().__init__("AddPlatformWindow.ui", AddPlatformWindowController, parent)
         self.formatComboBox.addItems(InitialData.ADVERTISEMENT_FORMATS)
         self.typeComboBox.addItems(InitialData.PLATFORM_TYPES)
-        self.saveButton.clicked.connect(self.save)
-        self.cancelButton.clicked.connect(self.reject)
-        self.__controller = AddPlatformWindowController(self)
-        self.typeButton.clicked.connect(self.toggle_type)
-        self.formatButton.clicked.connect(self.toggle_format)
-        self.sizeButton.clicked.connect(self.toggle_size)
-        self.budgetAllocationButton.clicked.connect(self.toggle_budget_allocation)
-        self.reset_data()
-        self.resetButton.clicked.connect(self.reset_data)
+        self.typeButton.clicked.connect(self.__controller.toggle_type)
+        self.formatButton.clicked.connect(self.__controller.toggle_format)
+        self.sizeButton.clicked.connect(self.__controller.toggle_size)
+        self.budgetAllocationButton.clicked.connect(self.__controller.toggle_budget_allocation)
         self.budgetAllocationLabel.hide()
         self.budgetAllocationSpinBox.hide()
         self.reset_data()
-
-    def toggle_budget_allocation(self) -> None:
-        if self.budgetAllocationSpinBox.isEnabled():
-            self.budgetAllocationSpinBox.setEnabled(False)
-            self.budgetAllocationButton.setText("Add budget")
-        else:
-            self.budgetAllocationSpinBox.setEnabled(True)
-            self.budgetAllocationButton.setText("Remove budget")
-
-    def toggle_type(self) -> None:
-        if self.typeComboBox.isEnabled():
-            self.typeComboBox.setEnabled(False)
-            self.typeButton.setText("Add type")
-        else:
-            self.typeComboBox.setEnabled(True)
-            self.typeButton.setText("Remove type")
-
-    def toggle_format(self) -> None:
-        if self.formatComboBox.isEnabled():
-            self.formatComboBox.setEnabled(False)
-            self.formatButton.setText("Add format")
-        else:
-            self.formatComboBox.setEnabled(True)
-            self.formatButton.setText("Remove format")
-
-    def toggle_size(self) -> None:
-        if self.audienceSpinBox.isEnabled():
-            self.audienceSpinBox.setEnabled(False)
-            self.sizeButton.setText("Add size")
-        else:
-            self.audienceSpinBox.setEnabled(True)
-            self.sizeButton.setText("Remove size")
-
-
-    def save(self) -> None:
-        validation = self.__controller.validate_window()
-        if validation:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Unfilled fields",
-                validation
-            )
-        else:
-            self.accept()
-
-    def get_data(self) -> Optional[Advertisement]:
-        return self.__controller.get_data()
-
-    def set_data(self, platform) -> None:
-        self.__controller.set_data(platform)
-
-    def reset_data(self):
-        self.__controller.reset_data()
 
     def show_budget_allocation(self):
         self.budgetAllocationLabel.show()
@@ -246,8 +160,10 @@ class AddPlatformWindow(QtWidgets.QDialog):
         self.budgetAllocationButton.show()
 
 
+
     def set_budget_allocation(self, value):
         self.show_budget_allocation()
+        self.__controller.set_budget_allocation(value)
         if value is not None:
             self.budgetAllocationSpinBox.setValue(value)
             self.budgetAllocationSpinBox.setEnabled(True)
@@ -259,201 +175,63 @@ class AddPlatformWindow(QtWidgets.QDialog):
     def get_budget_allocation(self):
         return self.budgetAllocationSpinBox.value() if self.budgetAllocationSpinBox.isEnabled() else None
 
-class AddSegmentWindow(QtWidgets.QDialog):
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
+
+class AddSegmentWindow(AddWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("AddSegmentWindow.ui", self)
+        super().__init__("AddSegmentWindow.ui", AddSegmentWindowController, parent)
         self.genderComboBox.addItems(["Male", "Female", "Other"])
         self.locationComboBox.addItems(InitialData.LOCATIONS)
         self.languageComboBox.addItems(InitialData.LANGUAGES)
         self.deviceComboBox.addItems(InitialData.DEVICES)
-        self.saveButton.clicked.connect(self.save)
-        self.cancelButton.clicked.connect(self.reject)
-        self.__controller = AddSegmentWindowController(self)
-        self.reset_data()
-        self.locationButton.clicked.connect(self.toggle_location)
-        self.deviceButton.clicked.connect(self.toggle_device)
-        self.resetButton.clicked.connect(self.reset_data)
+        self.locationButton.clicked.connect(self.__controller.toggle_location)
+        self.deviceButton.clicked.connect(self.__controller.toggle_device)
         self.reset_data()
 
-    def toggle_location(self) -> None:
-        if self.locationComboBox.isEnabled():
-            self.locationComboBox.setEnabled(False)
-            self.locationButton.setText("Add location")
-        else:
-            self.locationComboBox.setEnabled(True)
-            self.locationButton.setText("Remove location")
-
-    def toggle_device(self) -> None:
-        if self.deviceComboBox.isEnabled():
-            self.deviceComboBox.setEnabled(False)
-            self.deviceButton.setText("Add device")
-        else:
-            self.deviceComboBox.setEnabled(True)
-            self.deviceButton.setText("Remove device")
-
-    def save(self) -> None:
-        validation = self.__controller.validate_window()
-        if validation:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Unfilled fields",
-                validation
-            )
-        else:
-            self.accept()
-
-    def get_data(self) -> Optional[Advertisement]:
-        return self.__controller.get_data()
-
-    def set_data(self, segment) -> None:
-        self.__controller.set_data(segment)
-
-    def reset_data(self):
-        self.__controller.reset_data()
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
 
 
-class AddUserWindow(QtWidgets.QDialog):
+
+class AddUserWindow(AddWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("AddUserWindow.ui", self)
+        super().__init__("AddUserWindow.ui", AddUserWindowController, parent)
         self.genderComboBox.addItems(["Male", "Female", "Other"])
         self.countryComboBox.addItems(InitialData.LOCATIONS)
         self.createdDateEdit.setCalendarPopup(True)
         self.lastPurchaseDateEdit.setCalendarPopup(True)
         self.segmentComboBox.addItems([segment.segment_name for segment in InitialData.AudienceSegments.get_items() if segment.segment_name])
-        self.saveButton.clicked.connect(self.save)
-        self.cancelButton.clicked.connect(self.reject)
-        self.__controller = AddUserWindowController(self)
-        self.reset_data()
-        self.dateButton.clicked.connect(self.toggle_date)
-        self.segmentButton.clicked.connect(self.toggle_segment)
-        self.resetButton.clicked.connect(self.reset_data)
+        self.dateButton.clicked.connect(self.__controller.toggle_date)
+        self.segmentButton.clicked.connect(self.__controller.toggle_segment)
         self.reset_data()
 
-    def toggle_date(self) -> None:
-        if self.lastPurchaseDateEdit.isEnabled():
-            self.lastPurchaseDateEdit.setEnabled(False)
-            self.dateButton.setText("Add date")
-        else:
-            self.lastPurchaseDateEdit.setEnabled(True)
-            self.dateButton.setText("Remove date")
-
-    def toggle_segment(self) -> None:
-        if self.segmentComboBox.isEnabled():
-            self.segmentComboBox.setEnabled(False)
-            self.segmentButton.setText("Add segment")
-        else:
-            self.segmentComboBox.setEnabled(True)
-            self.segmentButton.setText("Remove segment")
-
-    def save(self) -> None:
-        validation = self.__controller.validate_window()
-        if validation:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Unfilled fields",
-                validation
-            )
-        else:
-            self.accept()
-
-    def get_data(self) -> Optional[Advertisement]:
-        return self.__controller.get_data()
-
-    def set_data(self, user) -> None:
-        self.__controller.set_data(user)
-
-    def reset_data(self):
-        self.__controller.reset_data()
 
     def set_segment_name(self, segment_name: int):
         self.__controller.set_segment_name(segment_name)
 
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
 
 
-class AddCampaignWindow(QtWidgets.QDialog):
+
+class AddCampaignWindow(AddWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("AddCampaignWindow.ui", self)
+        super().__init__("AddCampaignWindow.ui", AddCampaignWindowController, parent)
         self.startDateEdit.setCalendarPopup(True)
         self.endDateEdit.setCalendarPopup(True)
-        self.startDateButton.clicked.connect(self.toggle_start_date)
-        self.endDateButton.clicked.connect(self.toggle_end_date)
-        self.budgetButton.clicked.connect(self.toggle_budget)
-        self.budgetAllocationButton.clicked.connect(self.toggle_budget_allocation)
+        self.startDateButton.clicked.connect(self.__controller.toggle_start_date)
+        self.endDateButton.clicked.connect(self.__controller.toggle_end_date)
+        self.budgetButton.clicked.connect(self.__controller.toggle_budget)
+        self.budgetAllocationButton.clicked.connect(self.__controller.toggle_budget_allocation)
         self.budgetAllocationLabel.hide()
         self.budgetAllocationSpinBox.hide()
         self.budgetAllocationButton.hide()
-        self.__controller = AddCampaignWindowController(self)
         self.companyComboBox.addItems([client.company_name for client in InitialData.Clients.get_items()])
         self.reset_data()
-        self.saveButton.clicked.connect(self.save)
-        self.cancelButton.clicked.connect(self.reject)
-        self.resetButton.clicked.connect(self.reset_data)
-
-    def save(self) -> None:
-        validation = self.__controller.validate_window()
-        if validation:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Unfilled fields",
-                validation
-            )
-        else:
-            self.accept()
-
-    def get_data(self):
-        return self.__controller.get_data()
-
-    def reset_data(self) -> None:
-        self.__controller.reset_data()
-        self.budgetSpinBox.setEnabled(False)
-        self.startDateEdit.setEnabled(False)
-        self.endDateEdit.setEnabled(False)
-        self.budgetAllocationSpinBox.setEnabled(False)
-        self.startDateButton.setText("Add Date")
-        self.endDateButton.setText("Add Date")
-        self.budgetButton.setText("Add budget")
-        self.budgetAllocationButton.setText("Add budget")
-
-    def set_data(self, campaign: Campaign) -> None:
-        self.__controller.set_data(campaign)
-        self.startDateButton.setText("Remove Date" if campaign.start_date else "Add Date")
-        self.endDateButton.setText("Remove Date" if campaign.end_date else "Add Date")
-        self.budgetButton.setText("Remove budget" if campaign.budget is not None else "Add budget")
-
-    def toggle_start_date(self) -> None:
-        if self.startDateEdit.isEnabled():
-            self.startDateEdit.setEnabled(False)
-            self.startDateButton.setText("Add Date")
-        else:
-            self.startDateEdit.setEnabled(True)
-            self.startDateButton.setText("Remove Date")
-
-    def toggle_end_date(self) -> None:
-        if self.endDateEdit.isEnabled():
-            self.endDateEdit.setEnabled(False)
-            self.endDateButton.setText("Add Date")
-        else:
-            self.endDateEdit.setEnabled(True)
-            self.endDateButton.setText("Remove Date")
-
-    def toggle_budget(self) -> None:
-        if self.budgetSpinBox.isEnabled():
-            self.budgetSpinBox.setEnabled(False)
-            self.budgetButton.setText("Add budget")
-        else:
-            self.budgetSpinBox.setEnabled(True)
-            self.budgetButton.setText("Remove budget")
-
-    def toggle_budget_allocation(self) -> None:
-        if self.budgetAllocationSpinBox.isEnabled():
-            self.budgetAllocationSpinBox.setEnabled(False)
-            self.budgetAllocationButton.setText("Add budget")
-        else:
-            self.budgetAllocationSpinBox.setEnabled(True)
-            self.budgetAllocationButton.setText("Remove budget")
 
     def set_client_name(self, client_name):
         self.companyComboBox.setCurrentText(str(client_name))
@@ -466,58 +244,27 @@ class AddCampaignWindow(QtWidgets.QDialog):
 
     def set_budget_allocation(self, value):
         self.show_budget_allocation()
-        if value is not None:
-            self.budgetAllocationSpinBox.setValue(value)
-            self.budgetAllocationSpinBox.setEnabled(True)
-            self.budgetAllocationButton.setText("Remove budget")
-        else:
-            self.budgetAllocationSpinBox.setEnabled(False)
-            self.budgetAllocationButton.setText("Add budget")
+        self.__controller.set_budget_allocation(value)
 
     def get_budget_allocation(self):
         return self.budgetAllocationSpinBox.value() if self.budgetAllocationSpinBox.isEnabled() else None
 
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
 
-class AddClientWindow(QtWidgets.QDialog):
+
+class AddClientWindow(AddWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("AddClientWindow.ui", self)
+        super().__init__("AddClientWindow.ui", AddClientWindowController, parent)
         self.typeComboBox.addItems(["Individual", "Company"])
         self.areaComboBox.addItems(InitialData.CLIENT_AREAS)
-        self.__controller = AddClientWindowController(self)
         self.reset_data()
-        self.saveButton.clicked.connect(self.save)
-        self.cancelButton.clicked.connect(self.reject)
-        self.resetButton.clicked.connect(self.reset_data)
-        self.budgetButton.clicked.connect(self.toggle_budget)
+        self.budgetButton.clicked.connect(self.__controller.toggle_budget)
 
-    def toggle_budget(self) -> None:
-        if self.budgetSpinBox.isEnabled():
-            self.budgetSpinBox.setEnabled(False)
-            self.budgetButton.setText("Add budget")
-        else:
-            self.budgetSpinBox.setEnabled(True)
-            self.budgetButton.setText("Remove budget")
-
-    def save(self) -> None:
-        validation = self.__controller.validate_window()
-        if validation:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Unfilled fields",
-                validation
-            )
-        else:
-            self.accept()
-
-    def get_data(self) -> Optional[Client]:
-        return self.__controller.get_data()
-
-    def reset_data(self) -> None:
-        self.__controller.reset_data()
-
-    def set_data(self, client) -> None:
-        self.__controller.set_data(client)
+    @property
+    def __controller(self):
+        return self._AddWindow__controller
 
 
 class MainWindow(QtWidgets.QMainWindow):
