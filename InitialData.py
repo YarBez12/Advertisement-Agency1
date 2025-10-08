@@ -1,13 +1,9 @@
 from Collections import *
 
 DB_CONFIG = {
-    "Driver": "{ODBC Driver 17 for SQL Server}",
-    "Server": "localhost,1433",
-    "Database": "Advertising Agency",
-    "Uid": "SA",
-    "Pwd": "LUDRHQ2g4",
-    "Encrypt": "no",
-    "TrustServerCertificate": "yes"
+    "DSN": "AppDB",
+    "Uid": "su",
+    "Pwd": "LUDRHQ2g4"
 }
 
 ADVERTISEMENT_FORMATS = [

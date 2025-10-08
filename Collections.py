@@ -1,4 +1,7 @@
 from Models import *
+from datetime import date, datetime
+from decimal import Decimal
+
 
 class Collection:
     def __init__(self):
@@ -139,7 +142,7 @@ class ClientCollection(Collection):
                 address=row[4],
                 type=row[5],
                 business_area=row[6],
-                available_budget=row[7]
+                available_budget=int(row[7]) if row[7] is not None else 0
             )
             clients_collection.add(client)
 
@@ -225,10 +228,10 @@ class CampaignCollection(Collection):
             campaign = Campaign(
                 campaign_id=row[0],
                 campaign_name=row[1],
-                start_date=row[2],
-                end_date=row[3],
+                start_date=row[2].strftime("%Y-%m-%d") if isinstance(row[2], (date, datetime)) else row[2],
+                end_date=row[3].strftime("%Y-%m-%d") if isinstance(row[3], (date, datetime)) else row[3],
                 goal=row[4],
-                budget=row[5],
+                budget=int(row[5]) if row[5] is not None else 0,
                 company_name=row[6],
             )
             campaign_collection.add(campaign)
@@ -477,7 +480,7 @@ class CampaignPlatformCollection(Collection):
             campaign_platform = CampaignPlatform(
                 campaign_id=row[0],
                 platform_id=row[1],
-                budget_allocation=row[2]
+                budget_allocation=int(row[2]) if isinstance(row[2], (int, float, Decimal)) and row[2] is not None else 0
             )
             campaign_platform_collection.add(campaign_platform)
 
@@ -722,8 +725,12 @@ class UserCollection(Collection):
                 age=row[2],
                 gender=row[3],
                 country=row[4],
-                account_creation_date=row[5],
-                last_purchase_date=row[6],
+                account_creation_date=(
+                    row[5].strftime("%Y-%m-%d") if isinstance(row[5], (date, datetime)) else row[5]
+                ),
+                last_purchase_date=(
+                    row[6].strftime("%Y-%m-%d") if isinstance(row[6], (date, datetime)) else row[6]
+                ),
                 segment_id=row[7]
             )
             user_collection.add(user)

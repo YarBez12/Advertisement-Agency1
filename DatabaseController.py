@@ -3,14 +3,10 @@ from typing import List, Tuple, Dict, Any
 
 from DatabaseQueryError import DatabaseQueryError
 
-DB_CONNECTION_CONFIG : Dict[str, str]= {
-    "Driver": "{ODBC Driver 17 for SQL Server}",
-    "Server": "localhost,1433",
-    "Database": "Advertising Agency",
-    "Uid": "SA",
-    "Pwd": "LUDRHQ2g4",
-    "Encrypt": "no",
-    "TrustServerCertificate": "yes"
+DB_CONNECTION_CONFIG = {
+    "DSN": "AppDB",
+    "Uid": "su",
+    "Pwd": "LUDRHQ2g4"
 }
 
 class DatabaseController:
